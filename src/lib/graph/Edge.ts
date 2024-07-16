@@ -8,4 +8,12 @@ export default class Edge {
     this.start = start;
     this.end = end;
   }
+
+  getStart(): Node {
+    return this.start;
+  }
+
+  getEnd(): Node {
+    return this.end;
+  }
 }

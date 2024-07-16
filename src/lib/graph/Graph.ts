@@ -3,11 +3,13 @@ import Node from "./Node";
 
 export default class Graph {
   private nodes: Map<number, Node>;
+  private edges: Edge[];
   private source: number;
   private destination: number;
 
   constructor(source: number, destination: number, nodes?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
     this.nodes = new Map();
+    this.edges = [];
     this.source = source;
     this.destination = destination;
 
@@ -22,6 +24,7 @@ export default class Graph {
           if (!start || !end) continue;
 
           const edge: Edge = new Edge(start, end);
+          this.edges.push(edge);
 
           start.addEdge(edge);
           end.addEdge(edge);
@@ -40,5 +43,9 @@ export default class Graph {
 
   getNodes(): Map<number, Node> {
     return this.nodes;
+  }
+
+  getEdges(): Edge[] {
+    return [...this.edges];
   }
 }

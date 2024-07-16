@@ -1,18 +1,18 @@
-import Node from "./graph/Node";
-
-export async function queryStreets(boundingBox: [Coordinates, Coordinates]): Promise<[nodes: GeoLocationPoint[], ways: GeoLocationWay[]]> {
+export async function queryStreets(boundingBox: [GeoLocationPoint, GeoLocationPoint], signal: AbortSignal): Promise<[nodes: GeoLocationPoint[], ways: GeoLocationWay[]]> {
   const streetQuery = `
-    [out:json][bbox: ${boundingBox[0].latitude},${boundingBox[0].longitude},${boundingBox[1].latitude},${boundingBox[1].longitude}];
+    [out:json][bbox: ${boundingBox[0].lat},${boundingBox[0].lon},${boundingBox[1].lat},${boundingBox[1].lon}];
     (
-    way["highway"~"^(trunk|primary|secondary|tertiary|unclassified|residential)$"];
+    way["highway"~"^(trunk|primary|secondary|tertiary|residential|unclassified)$"];
     >;
     );
-    out skel;`;
+    out skel qt;`;
 
   const res = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     body: streetQuery,
+    signal: signal,
   });
+
   const data = await res.json();
   const elements: (GeoLocationPoint | GeoLocationWay)[] = data.elements;
 
