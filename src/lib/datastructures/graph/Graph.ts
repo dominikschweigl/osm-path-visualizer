@@ -4,14 +4,14 @@ import Node from "./Node";
 export default class Graph {
   private nodes: Map<number, Node>;
   private edges: Edge[];
-  private source: number;
-  private destination: number;
+  private sourceID: number;
+  private destinationID: number;
 
   constructor(source: number, destination: number, nodes?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
     this.nodes = new Map();
     this.edges = [];
-    this.source = source;
-    this.destination = destination;
+    this.sourceID = source;
+    this.destinationID = destination;
 
     if (nodes && ways) {
       for (const node of nodes) {
@@ -26,23 +26,23 @@ export default class Graph {
           const edge: Edge = new Edge(start, end);
           this.edges.push(edge);
 
-          start.addEdge(edge);
-          end.addEdge(edge);
+          start.addEdge(end, edge);
+          end.addEdge(start, edge);
         }
       }
     }
   }
 
-  getSource(): number {
-    return this.source;
+  getSource(): Node {
+    return this.nodes.get(this.sourceID) as Node;
   }
 
-  getDestination(): number {
-    return this.destination;
+  getDestination(): Node {
+    return this.nodes.get(this.destinationID) as Node;
   }
 
-  getNodes(): Map<number, Node> {
-    return this.nodes;
+  getNodes(): Node[] {
+    return Array.from(this.nodes.values());
   }
 
   getEdges(): Edge[] {

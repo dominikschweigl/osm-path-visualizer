@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -221,18 +222,13 @@ export default function RootLayout({
                 Share
               </Button>
             </header>
-            <main className="h-full">{children}</main>
+            <main className="h-full">
+              {children}
+              <Toaster />
+            </main>
           </div>
         </div>
       </body>
     </html>
   );
-}
-
-{
-  /* <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2">
-            <Badge variant="outline" className="absolute right-3 top-3">
-              Output
-            </Badge>
-          </div> */
 }

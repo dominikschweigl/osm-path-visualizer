@@ -5,13 +5,21 @@ interface GeoLocationPoint {
   lon: number;
 }
 
-interface GeoLocationWay {
+type GeoLocationWay = {
   type: "way";
   id: number;
   nodes: number[];
-}
+};
 
 interface Coordinates {
-  latitude: number;
-  longitude: number;
+  type: "coordinates";
+  lat: number;
+  lon: number;
+}
+
+interface BoundingBox {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }

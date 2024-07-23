@@ -1,23 +1,30 @@
-export default function getNearestNode(point: Coordinates): GeoLocationPoint | null {
-  return null;
-}
+import { createGeoJSONCircle } from "./createGeoJSONCircle";
+import getBoundingBoxFromPolygon from "./getBoundingBoxFromPolygon";
+import { queryNodes } from "./overpassQuery";
+import { degreesToRads } from "./degreesToRads";
+import distanceBetweenNodes from "./distanceBetweenNodes";
+import { fetchError } from "../errors";
 
-export function createGeoJSONCircle(center: Coordinates, radius: number, points: number = 64): Coordinates[] {
-  const phi = center.latitude;
-  const lambda = center.longitude;
+const SEARCH_RADIUS = 1; //in km
 
-  const distanceX = radius / (111.32 * Math.cos((phi * Math.PI) / 180));
-  const distanceY = radius / 110.574;
+export default async function getNearestNode(point: Coordinates, signal: AbortSignal): Promise<GeoLocationPoint> {
+  const boundingBox = getBoundingBoxFromPolygon(createGeoJSONCircle(point, SEARCH_RADIUS));
 
-  const circle: Coordinates[] = [];
+  const nodes = await queryNodes(boundingBox, signal);
 
-  let theta, latitude, longitude;
-  for (let i = 0; i < points; i++) {
-    theta = (i / points) * 360;
-    latitude = phi + distanceX * Math.cos((theta * Math.PI) / 180);
-    longitude = lambda + distanceY * Math.sin((theta * Math.PI) / 180);
-    circle.push({ latitude: latitude, longitude: longitude });
+  if (!nodes.length) {
+    return Promise.reject(fetchError.NO_NODE_IN_PROXIMITY);
   }
 
-  return circle;
+  let minDistance = Number.MAX_VALUE;
+  let minDistanceNode = nodes[0];
+  for (const node of nodes) {
+    const distance = distanceBetweenNodes(point, node);
+    if (distance < minDistance) {
+      minDistance = distance;
+      minDistanceNode = node;
+    }
+  }
+
+  return minDistanceNode;
 }
