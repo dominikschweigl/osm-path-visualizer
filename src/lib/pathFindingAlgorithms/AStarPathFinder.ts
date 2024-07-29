@@ -6,7 +6,7 @@ import distanceBetweenNodes from "../mapUtils/distanceBetweenNodes";
 import { SetStateAction, Dispatch } from "react";
 import { Pathfinder } from "./interface";
 
-export default class DijkstraPathFinder implements Pathfinder {
+export default class AStarPathfinder implements Pathfinder {
   private graph: Graph;
   private heap: NodeHeap;
 
@@ -14,13 +14,12 @@ export default class DijkstraPathFinder implements Pathfinder {
   private searchedPaths: Edge[];
 
   private currentSearchNode: number;
-
   private currentShortestPathNode: Node;
 
   constructor(graph: Graph) {
     this.graph = graph;
-    this.currentShortestPathNode = graph.getDestination();
     this.currentSearchNode = 1;
+    this.currentShortestPathNode = graph.getDestination();
     this.searchedPaths = [];
     this.predecessors = new Map();
     this.heap = new NodeHeap(graph.getSource(), graph.getNodes());
@@ -36,6 +35,7 @@ export default class DijkstraPathFinder implements Pathfinder {
 
     const destination: Node = this.graph.getDestination();
     const nearestNode = this.heap.remove();
+
     if (nearestNode.getID() === destination.getID()) return true;
 
     nearestNode.getEdges().forEach((edge) => {
@@ -53,7 +53,7 @@ export default class DijkstraPathFinder implements Pathfinder {
 
         this.predecessors.set(neighbor.getID(), nearestNode);
 
-        this.heap.adjustDistance(neighbor, neighbor.getDistance());
+        this.heap.adjustDistance(neighbor, neighbor.getDistance() + distanceBetweenNodes(neighbor, destination));
       }
     });
 

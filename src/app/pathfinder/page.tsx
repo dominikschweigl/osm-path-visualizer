@@ -1,5 +1,5 @@
 "use client";
-import Map, { Marker, MapRef } from "react-map-gl/maplibre";
+import Map, { Marker, MapRef, MapStyle, Popup } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import DeckGL, { DeckGLRef } from "@deck.gl/react";
 import { PolygonLayer } from "@deck.gl/layers";
@@ -14,19 +14,50 @@ import LocationsInput from "@/components/layouts/LocationsInput";
 import getUserPosition from "@/lib/mapUtils/getUserPosition";
 import getBoundingBoxFromPolygon from "@/lib/mapUtils/getBoundingBoxFromPolygon";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import {
+  Bird,
+  Book,
+  Bot,
+  Code2,
+  CornerDownLeft,
+  Crown,
+  LifeBuoy,
+  Mic,
+  Paperclip,
+  Rabbit,
+  Radius,
+  Settings,
+  Settings2,
+  Share,
+  SquareTerminal,
+  SquareUser,
+  Triangle,
+  Turtle,
+} from "lucide-react";
 
 import DijkstraPathFinder from "@/lib/pathFindingAlgorithms/DijkstraPathFinder";
 import { Button } from "@/components/ui/button";
 import Node from "@/lib/datastructures/graph/Node";
 import { handleMapClick } from "@/lib/mapUtils/handleMapClick";
 import { fetchError } from "@/lib/errors";
+import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 
-const MAP_STYLE = "https://api.maptiler.com/maps/9c94b982-e008-4449-bb86-d3d7e79f8f4e/style.json?key=Jn6z9F7PwQrDmuB1lfHJ";
+import * as maptiler from "@maptiler/sdk";
+import { Pathfinder } from "@/lib/pathFindingAlgorithms/interface";
+import AStarPathfinder from "@/lib/pathFindingAlgorithms/AStarPathFinder";
+import { Slider } from "@/components/ui/slider";
+
+const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 const INITIAL_ZOOM = 13;
 
-const SEARCH_RADIUS = 2;
+const SEARCH_RADIUS = 64;
 
-export default function Pathfinder() {
+export default function PathfindingVisualizer() {
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: 11.39,
     latitude: 47.27,
@@ -38,38 +69,77 @@ export default function Pathfinder() {
   const [destination, setDestination] = useState<GeoLocationPoint | null>(null);
 
   const [graph, setGraph] = useState<Graph>();
-  const [pathfinder, setPathfinder] = useState<DijkstraPathFinder>();
+  const [pathfinder, setPathfinder] = useState<Pathfinder>();
   const [searchPaths, setSearchPaths] = useState<Edge[]>([]);
+  const [shortestPath, setShortestPath] = useState<Edge[]>([]);
+
+  const [time, setTime] = useState<number>(0);
 
   const bound: BoundingBox | null = start && getBoundingBoxFromPolygon(createGeoJSONCircle(start, SEARCH_RADIUS));
 
   const [searchStarted, setSearchStarted] = useState(false);
+  const [shortestPathTrackStarted, setShortestPathTrackStarted] = useState(false);
+
+  const [pathfindingAlgorithm, setPathfindingAlgorithm] = useState<PathfindingAlgorithm>("a*");
+
+  const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>("medium");
 
   useEffect(() => {
-    if (!searchStarted) return;
+    if (!searchStarted || !pathfinder) {
+      return;
+    }
+    while (!pathfinder.nextSearchStep(setSearchPaths));
+  }, [searchStarted]);
+
+  useEffect(() => {
+    if (!searchStarted || !graph || !start || !destination) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTime((prev) => prev + distanceBetweenNodes(start, destination) / 200 + 0.5); //time for animation to reach destination
+
+      if (time >= graph.getNode(destination.id).getVisitTime()) {
+        setShortestPathTrackStarted(true);
+        setSearchStarted(false);
+      }
+    }, 20);
+
+    return () => clearInterval(interval);
+  }, [searchStarted, time]);
+
+  useEffect(() => {
+    if (!shortestPathTrackStarted) return;
+
     const interval = setInterval(() => {
       if (!pathfinder) {
         clearInterval(interval);
         return;
       }
-      const destinationFound = pathfinder.nextStep(setSearchPaths);
-      if (destinationFound) {
+      const startFound = pathfinder.nextTrackBackPathStep(setShortestPath);
+      if (startFound) {
         clearInterval(interval);
       }
-    }, 25);
+    }, 1);
 
     return () => clearInterval(interval);
-  }, [searchStarted]);
+  }, [shortestPathTrackStarted]);
 
   useEffect(() => {
+    setSearchPaths([]);
+    setShortestPath([]);
+    setSearchStarted(false);
+    setShortestPathTrackStarted(false);
+    setTime(0);
+
     if (!start || !destination) return;
 
     const controller = new AbortController();
     queryStreets(bound!, controller.signal)
       .then(([nodes, ways]) => {
-        const newGraph = new Graph(start.id, destination.id, nodes, ways);
+        const newGraph = new Graph(new Node(start.id, start.lat, start.lon), new Node(destination.id, destination.lat, destination.lon), nodes, ways);
         setGraph(newGraph);
-        setPathfinder(new DijkstraPathFinder(newGraph));
+        setPathfinder(pathfindingAlgorithm == "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph));
       })
       .catch(() => {});
 
@@ -78,21 +148,25 @@ export default function Pathfinder() {
     };
   }, [start, destination]);
 
-  const layers = [
-    new TripsLayer<Edge>({
-      id: "path-layer",
-      data: graph?.getEdges(),
-      getPath: (e) => [
-        [e.getStart().getLongitude(), e.getStart().getLatitude()],
-        [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
-      ],
-      getColor: [253, 128, 93],
-      fadeTrail: false,
-      capRounded: true,
-      jointRounded: true,
-      widthMinPixels: 3,
-    }),
+  useEffect(() => {
+    if (!graph) return;
+    setPathfinder(pathfindingAlgorithm == "a*" ? new AStarPathfinder(graph) : new DijkstraPathFinder(graph));
+  }, [pathfindingAlgorithm]);
 
+  const layers = [
+    // new TripsLayer<Edge>({
+    //   id: "path-layer",
+    //   data: graph?.getEdges(),
+    //   getPath: (e) => [
+    //     [e.getStart().getLongitude(), e.getStart().getLatitude()],
+    //     [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
+    //   ],
+    //   getColor: [253, 128, 93],
+    //   fadeTrail: false,
+    //   capRounded: true,
+    //   jointRounded: true,
+    //   widthMinPixels: 2,
+    // }),
     new TripsLayer<Edge>({
       id: "search-layer",
       data: searchPaths,
@@ -100,62 +174,204 @@ export default function Pathfinder() {
         [e.getStart().getLongitude(), e.getStart().getLatitude()],
         [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
       ],
-      getColor: [3, 252, 132],
+      getTimestamps: (e) => {
+        return [Math.fround(e.getStart().getVisitTime()), Math.fround(e.getEnd().getVisitTime())];
+      },
+
+      currentTime: time,
+      getColor: [0, 0, 0],
       fadeTrail: false,
       capRounded: true,
       jointRounded: true,
-      widthMinPixels: 5,
+      widthMinPixels: 2,
     }),
-    new PolygonLayer<Coordinates[]>({
-      id: "circle",
-      data: start ? [createGeoJSONCircle(start, SEARCH_RADIUS)] : [],
-      getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
-      getElevation: 10,
-      getFillColor: [0, 0, 0, 0],
-      getLineColor: [0, 0, 0],
-      getLineWidth: 4,
-      lineWidthMinPixels: 4,
-      pickable: true,
+    new TripsLayer<Edge>({
+      id: "shortest-path-layer",
+      data: shortestPath,
+      getPath: (e) => [
+        [e.getStart().getLongitude(), e.getStart().getLatitude()],
+        [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
+      ],
+      getColor: [13, 131, 252],
+      fadeTrail: false,
+      capRounded: true,
+      jointRounded: true,
+      widthMinPixels: 2,
     }),
+    // new PolygonLayer<Coordinates[]>({
+    //   id: "circle",
+    //   data: start ? [createGeoJSONCircle(start, SEARCH_RADIUS)] : [],
+    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
+    //   getElevation: 10,
+    //   getFillColor: [0, 0, 0, 0],
+    //   getLineColor: [0, 0, 0],
+    //   getLineWidth: 4,
+    //   lineWidthMinPixels: 4,
+    //   pickable: true,
+    // }),
   ];
 
   const deck = useRef<HTMLDivElement>(null);
-
-  // useEffect(() => {
-  //   const abort = (e) => {
-  //     // e.preventDefault();
-  //     console.log(e);
-  //     clickAbortController.abort();
-  //   };
-  //   deck.current?.ondblclick((e: MouseEvent) => abort(e));
-  //   return () => deck.current?.deck?.getCanvas()?.removeEventListener("dblclick", abort);
-  // }, [deck]);
 
   const lastClick = useRef<number>(0);
 
   const previousClickAbortController = useRef<AbortController | null>(null);
 
   return (
-    <div className="h-full">
-      <div className="w-[400px] z-10 relative left-6 top-6 flex flex-col gap-3">
-        <LocationsInput start={start} destination={destination} />
-        <Button onClick={() => setSearchStarted(true)}>Start Search</Button>
+    <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
+        <form className="grid w-full items-start gap-6">
+          <LocationsInput start={start} destination={destination} setSearchStarted={setSearchStarted} />
+          <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
+            <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
+            <div className="grid gap-3">
+              <Label htmlFor="model">Search Algorithm</Label>
+              <Select value={pathfindingAlgorithm} onValueChange={(v: PathfindingAlgorithm) => setPathfindingAlgorithm(v)}>
+                <SelectTrigger id="model" className="items-start [&_[data-description]]:hidden">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="a*">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Crown className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">A*</span> Algorithm
+                        </p>
+                        <p className="text-xs" data-description>
+                          The optimal Algorithm to find the shortest path
+                        </p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dijkstra">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Radius className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">Djisktra's</span> Algorithm
+                        </p>
+                        <p className="text-xs" data-description>
+                          The general method to find shortest paths
+                        </p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="animationSpeed">Animation Speed</Label>
+              <Select value={animationSpeed} onValueChange={(s: AnimationSpeed) => setAnimationSpeed(s)}>
+                <SelectTrigger id="animationSpeed" className="items-start [&_[data-description]]:hidden">
+                  <SelectValue placeholder="Select an animation speed" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="slow">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Rabbit className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">Fast</span> Simulation
+                        </p>
+                        <p className="text-xs" data-description>
+                          Well suited for large distances ~ 100km
+                        </p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="medium">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Bird className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">Medium</span> Simulation
+                        </p>
+                        <p className="text-xs" data-description>
+                          Works best for medium distances ~ 10km
+                        </p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="fast">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Turtle className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">Slow</span> Simulation
+                        </p>
+                        <p className="text-xs" data-description>
+                          Great for analyzing the search algorithm ~ 3km
+                        </p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="animationTime">Animation Time</Label>
+              <Slider
+                id={"animationTime"}
+                max={graph && destination ? graph?.getNode(destination.id).getVisitTime() : 100}
+                min={0}
+                step={0.1}
+                value={[time]}
+                onValueChange={([time]) => setTime(time)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <Label htmlFor="top-p">Search Radius</Label>
+                <Input id="top-p" type="number" placeholder="0.7" />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="top-k">Top K</Label>
+                <Input id="top-k" type="number" placeholder="0.0" />
+              </div>
+            </div>
+          </fieldset>
+          <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
+            <legend className="-ml-1 px-1 text-sm font-medium">Messages</legend>
+            <div className="grid gap-3">
+              <Label htmlFor="role">Role</Label>
+              <Select defaultValue="system">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="assistant">Assistant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="content">Content</Label>
+            </div>
+          </fieldset>
+        </form>
       </div>
-      <div ref={deck} onContextMenu={(e) => e.preventDefault()}>
-        <DeckGL
-          initialViewState={viewState}
-          controller={{ doubleClickZoom: false, dragRotate: false, inertia: true }}
-          layers={layers}
-          onClick={(info, event) => {
-            handleMapClick(info, event, setStart, setDestination, lastClick, previousClickAbortController);
-          }}
-        >
-          <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(INITIAL_ZOOM, setViewState)}>
-            {start !== null && <Marker latitude={start.lat} longitude={start.lon} color="#000000" />}
-            {destination !== null && <Marker latitude={destination.lat} longitude={destination.lon} />}
-          </Map>
-        </DeckGL>
+      <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-3 overflow-hidden border ">
+        <Badge variant="outline" className="absolute right-3 top-3 bg-white z-10">
+          Output
+        </Badge>
+        <div ref={deck} onContextMenu={(e) => e.preventDefault()}>
+          <DeckGL
+            initialViewState={viewState}
+            controller={{ doubleClickZoom: false, dragRotate: true, inertia: true }}
+            layers={layers}
+            onClick={(info, event) => {
+              handleMapClick(info, event, setStart, setDestination, lastClick, previousClickAbortController);
+            }}
+          >
+            <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(INITIAL_ZOOM, setViewState)}>
+              {start !== null && <Marker latitude={start.lat} longitude={start.lon} style={{ backgroundImage: "none" }} />}
+              {destination !== null && <Marker latitude={destination.lat} longitude={destination.lon} />}
+            </Map>
+          </DeckGL>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

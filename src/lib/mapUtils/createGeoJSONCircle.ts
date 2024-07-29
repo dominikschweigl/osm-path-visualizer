@@ -7,7 +7,6 @@ import { POLE_RADIUS, EQUATOR_RADIUS } from "../constants";
  * @param points amount of points the circle consists of
  * @returns
  */
-
 export function createGeoJSONCircle(center: GeoLocationPoint | Coordinates, radius: number, points: number = 64): Coordinates[] {
   const phi = center.lat;
   const lambda = center.lon;
@@ -20,9 +19,9 @@ export function createGeoJSONCircle(center: GeoLocationPoint | Coordinates, radi
   let theta, latitude, longitude;
   for (let i = 0; i < points; i++) {
     theta = (i / points) * 360;
-    latitude = phi + distanceY * Math.cos((theta * Math.PI) / 180);
-    longitude = lambda + distanceX * Math.sin((theta * Math.PI) / 180);
-    circle.push({ lat: latitude, lon: longitude });
+    latitude = phi + distanceY * Math.sin((theta * Math.PI) / 180);
+    longitude = lambda + distanceX * Math.cos((theta * Math.PI) / 180);
+    circle.push({ type: "coordinates", lat: latitude, lon: longitude });
   }
 
   return circle;

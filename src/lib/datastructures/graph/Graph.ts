@@ -7,14 +7,19 @@ export default class Graph {
   private sourceID: number;
   private destinationID: number;
 
-  constructor(source: number, destination: number, nodes?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
-    this.nodes = new Map();
+  constructor(source: Node, destination: Node, nodes?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
+    this.sourceID = source.getID();
+    this.destinationID = destination.getID();
     this.edges = [];
-    this.sourceID = source;
-    this.destinationID = destination;
+    this.nodes = new Map();
+    this.nodes.set(this.sourceID, source);
+    this.nodes.set(this.destinationID, destination);
+    source.setDistance(0);
+    source.setVisitTime(0);
 
     if (nodes && ways) {
       for (const node of nodes) {
+        if (this.nodes.has(node.id)) continue;
         this.nodes.set(node.id, new Node(node.id, node.lat, node.lon));
       }
       for (const way of ways) {
@@ -23,11 +28,13 @@ export default class Graph {
           const end = this.nodes.get(way.nodes[i]);
           if (!start || !end) continue;
 
-          const edge: Edge = new Edge(start, end);
-          this.edges.push(edge);
+          const startEdge: Edge = new Edge(start, end);
+          const endEdge: Edge = new Edge(end, start);
+          this.edges.push(startEdge);
+          this.edges.push(endEdge);
 
-          start.addEdge(end, edge);
-          end.addEdge(start, edge);
+          start.addEdge(end, startEdge);
+          end.addEdge(start, endEdge);
         }
       }
     }
@@ -43,6 +50,12 @@ export default class Graph {
 
   getNodes(): Node[] {
     return Array.from(this.nodes.values());
+  }
+
+  getNode(id: number): Node {
+    const node = this.nodes.get(id);
+    if (!node) throw new Error(`Node {${id}} not stored in Graph`);
+    return node;
   }
 
   getEdges(): Edge[] {

@@ -1,8 +1,7 @@
 import Node from "@/lib/datastructures/graph/Node";
-import distanceBetweenNodes from "../mapUtils/distanceBetweenNodes";
 
-export default class MinDistanceHeap {
-  private heap: Node[];
+export default class NodeHeap {
+  private heap: { node: Node; key: number }[];
   private NodeIndices: Map<number, number>;
   private start: Node;
 
@@ -12,16 +11,16 @@ export default class MinDistanceHeap {
     this.NodeIndices = new Map();
 
     if (nodes) {
-      this.heap = nodes;
-
       nodes.forEach((node, i) => {
         this.NodeIndices.set(node.getID(), i);
         node.setDistance(node.getID() === start.getID() ? 0 : Number.MAX_VALUE);
       });
 
+      this.heap = nodes.map((node) => ({ node: node, key: node.getDistance() }));
+
       for (let i = this.heap.length - 1; i > 0; i--) {
-        const parent = MinDistanceHeap.getParentIndex(i);
-        if (this.heap[parent].getDistance() > this.heap[i].getDistance()) this.swap(parent, i);
+        const parent = NodeHeap.getParentIndex(i);
+        if (this.heap[parent].key > this.heap[i].key) this.swap(parent, i);
       }
     }
   }
@@ -32,38 +31,38 @@ export default class MinDistanceHeap {
   }
 
   private parent(child: number): Node {
-    return this.heap[MinDistanceHeap.getParentIndex(child)];
+    return this.heap[NodeHeap.getParentIndex(child)].node;
   }
 
   private static getLeftChildIndex(parentIndex: number): number {
     return parentIndex * 2 + 1;
   }
 
-  private leftChild(parentIndex: number): Node {
-    return this.heap[MinDistanceHeap.getLeftChildIndex(parentIndex)];
+  private leftChild(parentIndex: number): { node: Node; key: number } {
+    return this.heap[NodeHeap.getLeftChildIndex(parentIndex)];
   }
 
   private hasLeftChild(parentIndex: number): boolean {
-    return MinDistanceHeap.getLeftChildIndex(parentIndex) < this.heap.length;
+    return NodeHeap.getLeftChildIndex(parentIndex) < this.heap.length;
   }
 
   private static getRightChildIndex(parentIndex: number): number {
     return parentIndex * 2 + 2;
   }
 
-  private rightChild(parentIndex: number): Node {
-    return this.heap[MinDistanceHeap.getRightChildIndex(parentIndex)];
+  private rightChild(parentIndex: number): { node: Node; key: number } {
+    return this.heap[NodeHeap.getRightChildIndex(parentIndex)];
   }
 
   private hasRightChild(parentIndex: number): boolean {
-    return MinDistanceHeap.getRightChildIndex(parentIndex) < this.heap.length;
+    return NodeHeap.getRightChildIndex(parentIndex) < this.heap.length;
   }
 
   private swap(index1: number, index2: number): void {
     const node1 = this.heap[index1];
     const node2 = this.heap[index2];
-    this.NodeIndices.set(node1.getID(), index2);
-    this.NodeIndices.set(node2.getID(), index1);
+    this.NodeIndices.set(node1.node.getID(), index2);
+    this.NodeIndices.set(node2.node.getID(), index1);
 
     const temp = this.heap[index1];
     this.heap[index1] = this.heap[index2];
@@ -78,8 +77,8 @@ export default class MinDistanceHeap {
 
   private heapifyUp(nodeIndex?: number): void {
     let current = nodeIndex || this.heap.length - 1;
-    while (current > 0 && this.parent(current).getDistance() > this.heap[current].getDistance()) {
-      const parent = MinDistanceHeap.getParentIndex(current);
+    while (current > 0 && this.heap[NodeHeap.getParentIndex(current)].key > this.heap[current].key) {
+      const parent = NodeHeap.getParentIndex(current);
       this.swap(current, parent);
       current = parent;
     }
@@ -88,9 +87,9 @@ export default class MinDistanceHeap {
   remove(): Node {
     const popped = this.heap.pop();
     if (!popped) throw new Error("ERROR: tried to remove from empty Heap!");
-    if (!this.heap.length) return popped;
+    if (!this.heap.length) return popped.node;
 
-    const node = this.heap[0];
+    const node = this.heap[0].node;
     this.NodeIndices.delete(node.getID());
 
     this.heap[0] = popped;
@@ -99,15 +98,19 @@ export default class MinDistanceHeap {
     return node;
   }
 
+  peek(): Node {
+    return this.heap[0].node;
+  }
+
   private heapifyDown(): void {
     let current = 0;
 
     while (this.hasLeftChild(current)) {
-      let smallerChild = MinDistanceHeap.getLeftChildIndex(current);
-      if (this.hasRightChild(current) && this.leftChild(current).getDistance() > this.rightChild(current).getDistance()) {
-        smallerChild = MinDistanceHeap.getRightChildIndex(current);
+      let smallerChild = NodeHeap.getLeftChildIndex(current);
+      if (this.hasRightChild(current) && this.leftChild(current).key > this.rightChild(current).key) {
+        smallerChild = NodeHeap.getRightChildIndex(current);
       }
-      if (this.heap[current].getDistance() < this.heap[smallerChild].getDistance()) {
+      if (this.heap[current].key < this.heap[smallerChild].key) {
         break;
       }
       this.swap(current, smallerChild);
@@ -117,9 +120,11 @@ export default class MinDistanceHeap {
 
   adjustDistance(node: Node, distance: number): void {
     const nodeIndex = this.NodeIndices.get(node.getID());
-    if (!nodeIndex) throw new Error(`ERROR: node {${node.getID()}} not inside heap!`);
+    if (!nodeIndex) {
+      return;
+    }
 
-    this.heap[nodeIndex].setDistance(distance);
+    this.heap[nodeIndex].key = distance;
     this.heapifyUp(nodeIndex);
   }
 

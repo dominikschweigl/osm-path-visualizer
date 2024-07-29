@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="grid h-screen w-full pl-[56px]">
-          <aside className="inset-y fixed  left-0 z-20 flex h-full flex-col border-r bg-white">
+          <aside className="inset-y fixed  left-0 z-50 flex h-full flex-col border-r bg-white">
             <div className="border-b p-2">
               <Button variant="outline" size="icon" aria-label="Home">
                 <Triangle className="size-5 fill-foreground" />
@@ -116,7 +116,7 @@ export default function RootLayout({
             </nav>
           </aside>
           <div className="flex flex-col">
-            <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background p-4">
+            <header className="sticky top-0 z-40 flex h-[57px] items-center gap-1 border-b bg-background p-4">
               <h1 className="text-xl font-semibold">Pathfinding Visualizer</h1>
               <Drawer>
                 <DrawerTrigger asChild>
@@ -222,10 +222,9 @@ export default function RootLayout({
                 Share
               </Button>
             </header>
-            <main className="h-full">
-              {children}
-              <Toaster />
-            </main>
+
+            {children}
+            <Toaster />
           </div>
         </div>
       </body>

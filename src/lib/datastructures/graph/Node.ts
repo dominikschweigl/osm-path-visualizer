@@ -7,6 +7,7 @@ export default class Node {
   private longitude: number;
   private edges: Map<number, Edge>;
   private distance: number;
+  private visitTime: number;
 
   constructor(id: number, latitude: number, longitude: number) {
     this.id = id;
@@ -14,6 +15,7 @@ export default class Node {
     this.longitude = longitude;
     this.edges = new Map<number, Edge>();
     this.distance = Number.MAX_VALUE;
+    this.visitTime = Number.MAX_VALUE - 100;
   }
 
   getEdges(): Edge[] {
@@ -46,7 +48,15 @@ export default class Node {
     return this.distance;
   }
 
+  getVisitTime(): number {
+    return this.visitTime;
+  }
+
   setDistance(distance: number): void {
     this.distance = distance;
+  }
+
+  setVisitTime(time: number): void {
+    this.visitTime = time;
   }
 }
