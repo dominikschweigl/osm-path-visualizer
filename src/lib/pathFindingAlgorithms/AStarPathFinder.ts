@@ -36,7 +36,10 @@ export default class AStarPathfinder implements Pathfinder {
     const destination: Node = this.graph.getDestination();
     const nearestNode = this.heap.remove();
 
-    if (nearestNode.getID() === destination.getID()) return true;
+    if (nearestNode.getID() === destination.getID()) {
+      setSearchedPaths(this.searchedPaths);
+      return true;
+    }
 
     nearestNode.getEdges().forEach((edge) => {
       const neighbor: Node = edge.opposite(nearestNode);
@@ -46,7 +49,7 @@ export default class AStarPathfinder implements Pathfinder {
       this.currentSearchNode++;
 
       this.searchedPaths.push(edge);
-      setSearchedPaths((prev) => [...prev, edge]);
+      // setSearchedPaths((prev) => [...prev, edge]);
 
       if (neighbor.getDistance() > nearestNode.getDistance() + distanceBetweenNodes(nearestNode, neighbor)) {
         neighbor.setDistance(nearestNode.getDistance() + distanceBetweenNodes(nearestNode, neighbor));

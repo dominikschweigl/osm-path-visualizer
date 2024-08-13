@@ -15,7 +15,7 @@ export default class Node {
     this.longitude = longitude;
     this.edges = new Map<number, Edge>();
     this.distance = Number.MAX_VALUE;
-    this.visitTime = Number.MAX_VALUE - 100;
+    this.visitTime = Number.MAX_VALUE;
   }
 
   getEdges(): Edge[] {

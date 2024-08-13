@@ -5,12 +5,13 @@ import { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { PickingInfo } from "@deck.gl/core";
 import { MjolnirGestureEvent } from "mjolnir.js";
 import { fetchError } from "../errors";
+import fetchLocationByCoordinates from "./fetchLocationByCoordinates";
 
 export async function handleMapClick(
   info: PickingInfo,
   event: MjolnirGestureEvent,
-  setStart: Dispatch<SetStateAction<GeoLocationPoint | null>>,
-  setDestination: Dispatch<SetStateAction<GeoLocationPoint | null>>,
+  setStart: Dispatch<SetStateAction<MapLocation | null>>,
+  setDestination: Dispatch<SetStateAction<MapLocation | null>>,
   lastClickRef: MutableRefObject<number>,
   previousController: MutableRefObject<AbortController | null>
 ) {
@@ -29,8 +30,7 @@ export async function handleMapClick(
 
   if (event.leftButton) {
     try {
-      const node = await getNearestNode({ type: "coordinates", lat: info.coordinate[1], lon: info.coordinate[0] }, controller.signal);
-      setStart(node);
+      setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null));
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {
         //TODO: possibly use toast promise
@@ -44,8 +44,7 @@ export async function handleMapClick(
 
   if (event.rightButton) {
     try {
-      const node = await getNearestNode({ type: "coordinates", lat: info.coordinate[1], lon: info.coordinate[0] }, controller.signal);
-      setDestination(node);
+      setDestination(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null));
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {
         toast.error("No Street found nearby", {

@@ -11,8 +11,8 @@ export function createGeoJSONCircle(center: GeoLocationPoint | Coordinates, radi
   const phi = center.lat;
   const lambda = center.lon;
 
-  const distanceX = (180 * radius) / (Math.cos((phi * Math.PI) / 180) * EQUATOR_RADIUS * 2 * Math.PI * Math.PI);
-  const distanceY = (180 * radius) / (POLE_RADIUS * 2 * Math.PI * Math.PI);
+  const distanceX = (180 * radius) / (Math.cos((phi * Math.PI) / 180) * EQUATOR_RADIUS * Math.PI);
+  const distanceY = (180 * radius) / (POLE_RADIUS * Math.PI);
 
   const circle: Coordinates[] = [];
 

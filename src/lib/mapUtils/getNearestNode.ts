@@ -1,16 +1,16 @@
 import { createGeoJSONCircle } from "./createGeoJSONCircle";
 import getBoundingBoxFromPolygon from "./getBoundingBoxFromPolygon";
 import { queryNodes } from "./overpassQuery";
-import { degreesToRads } from "./degreesToRads";
 import distanceBetweenNodes from "./distanceBetweenNodes";
 import { fetchError } from "../errors";
 
-const SEARCH_RADIUS = 1; //in km
+const SEARCH_RADIUS: number = 2; //in km
 
-export default async function getNearestNode(point: Coordinates, signal: AbortSignal): Promise<GeoLocationPoint> {
+export default async function getNearestNode(point: Coordinates, signal: AbortSignal | null): Promise<GeoLocationPoint> {
   const boundingBox = getBoundingBoxFromPolygon(createGeoJSONCircle(point, SEARCH_RADIUS));
+  const controller = new AbortController();
 
-  const nodes = await queryNodes(boundingBox, signal);
+  const nodes = await queryNodes(boundingBox, signal || controller.signal);
 
   if (!nodes.length) {
     return Promise.reject(fetchError.NO_NODE_IN_PROXIMITY);

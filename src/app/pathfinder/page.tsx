@@ -55,7 +55,7 @@ import { Slider } from "@/components/ui/slider";
 const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 const INITIAL_ZOOM = 13;
 
-const SEARCH_RADIUS = 64;
+const SEARCH_RADIUS = 10;
 
 export default function PathfindingVisualizer() {
   const [viewState, setViewState] = useState<MapViewState>({
@@ -65,8 +65,8 @@ export default function PathfindingVisualizer() {
     transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
     transitionDuration: "auto",
   });
-  const [start, setStart] = useState<GeoLocationPoint | null>(null);
-  const [destination, setDestination] = useState<GeoLocationPoint | null>(null);
+  const [start, setStart] = useState<MapLocation | null>(null);
+  const [destination, setDestination] = useState<MapLocation | null>(null);
 
   const [graph, setGraph] = useState<Graph>();
   const [pathfinder, setPathfinder] = useState<Pathfinder>();
@@ -75,7 +75,7 @@ export default function PathfindingVisualizer() {
 
   const [time, setTime] = useState<number>(0);
 
-  const bound: BoundingBox | null = start && getBoundingBoxFromPolygon(createGeoJSONCircle(start, SEARCH_RADIUS));
+  const bound: BoundingBox | null = start && getBoundingBoxFromPolygon(createGeoJSONCircle(start.geoLocation, SEARCH_RADIUS));
 
   const [searchStarted, setSearchStarted] = useState(false);
   const [shortestPathTrackStarted, setShortestPathTrackStarted] = useState(false);
@@ -88,22 +88,24 @@ export default function PathfindingVisualizer() {
     if (!searchStarted || !pathfinder) {
       return;
     }
+
     while (!pathfinder.nextSearchStep(setSearchPaths));
   }, [searchStarted]);
 
   useEffect(() => {
     if (!searchStarted || !graph || !start || !destination) {
+      setSearchStarted(false);
       return;
     }
 
     const interval = setInterval(() => {
-      setTime((prev) => prev + distanceBetweenNodes(start, destination) / 200 + 0.5); //time for animation to reach destination
+      setTime((prev) => prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * 0.1 + 1); //time for animation to reach destination
 
-      if (time >= graph.getNode(destination.id).getVisitTime()) {
+      if (time >= graph.getNode(destination.geoLocation.id).getVisitTime()) {
         setShortestPathTrackStarted(true);
         setSearchStarted(false);
       }
-    }, 20);
+    }, 1);
 
     return () => clearInterval(interval);
   }, [searchStarted, time]);
@@ -137,9 +139,14 @@ export default function PathfindingVisualizer() {
     const controller = new AbortController();
     queryStreets(bound!, controller.signal)
       .then(([nodes, ways]) => {
-        const newGraph = new Graph(new Node(start.id, start.lat, start.lon), new Node(destination.id, destination.lat, destination.lon), nodes, ways);
+        const newGraph = new Graph(
+          new Node(start.geoLocation.id, start.geoLocation.lat, start.geoLocation.lon),
+          new Node(destination.geoLocation.id, destination.geoLocation.lat, destination.geoLocation.lon),
+          nodes,
+          ways
+        );
         setGraph(newGraph);
-        setPathfinder(pathfindingAlgorithm == "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph));
+        setPathfinder(pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph));
       })
       .catch(() => {});
 
@@ -177,7 +184,6 @@ export default function PathfindingVisualizer() {
       getTimestamps: (e) => {
         return [Math.fround(e.getStart().getVisitTime()), Math.fround(e.getEnd().getVisitTime())];
       },
-
       currentTime: time,
       getColor: [0, 0, 0],
       fadeTrail: false,
@@ -196,19 +202,19 @@ export default function PathfindingVisualizer() {
       fadeTrail: false,
       capRounded: true,
       jointRounded: true,
-      widthMinPixels: 2,
+      widthMinPixels: 4,
     }),
-    // new PolygonLayer<Coordinates[]>({
-    //   id: "circle",
-    //   data: start ? [createGeoJSONCircle(start, SEARCH_RADIUS)] : [],
-    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
-    //   getElevation: 10,
-    //   getFillColor: [0, 0, 0, 0],
-    //   getLineColor: [0, 0, 0],
-    //   getLineWidth: 4,
-    //   lineWidthMinPixels: 4,
-    //   pickable: true,
-    // }),
+    new PolygonLayer<Coordinates[]>({
+      id: "circle",
+      data: start ? [createGeoJSONCircle(start.geoLocation, SEARCH_RADIUS)] : [],
+      getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
+      getElevation: 10,
+      getFillColor: [0, 0, 0, 0],
+      getLineColor: [0, 0, 0],
+      getLineWidth: 4,
+      lineWidthMinPixels: 4,
+      pickable: true,
+    }),
   ];
 
   const deck = useRef<HTMLDivElement>(null);
@@ -221,7 +227,14 @@ export default function PathfindingVisualizer() {
     <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-4">
       <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
         <form className="grid w-full items-start gap-6">
-          <LocationsInput start={start} destination={destination} setSearchStarted={setSearchStarted} />
+          <LocationsInput
+            start={start}
+            setStart={setStart}
+            destination={destination}
+            setDestination={setDestination}
+            setViewState={setViewState}
+            setSearchStarted={setSearchStarted}
+          />
           <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
             <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
             <div className="grid gap-3">
@@ -313,7 +326,7 @@ export default function PathfindingVisualizer() {
               <Label htmlFor="animationTime">Animation Time</Label>
               <Slider
                 id={"animationTime"}
-                max={graph && destination ? graph?.getNode(destination.id).getVisitTime() : 100}
+                max={graph && destination ? graph?.getNode(destination.geoLocation.id)?.getVisitTime() : 100}
                 min={0}
                 step={0.1}
                 value={[time]}
@@ -331,25 +344,6 @@ export default function PathfindingVisualizer() {
               </div>
             </div>
           </fieldset>
-          <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
-            <legend className="-ml-1 px-1 text-sm font-medium">Messages</legend>
-            <div className="grid gap-3">
-              <Label htmlFor="role">Role</Label>
-              <Select defaultValue="system">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="assistant">Assistant</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="content">Content</Label>
-            </div>
-          </fieldset>
         </form>
       </div>
       <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-3 overflow-hidden border ">
@@ -365,9 +359,9 @@ export default function PathfindingVisualizer() {
               handleMapClick(info, event, setStart, setDestination, lastClick, previousClickAbortController);
             }}
           >
-            <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(INITIAL_ZOOM, setViewState)}>
-              {start !== null && <Marker latitude={start.lat} longitude={start.lon} style={{ backgroundImage: "none" }} />}
-              {destination !== null && <Marker latitude={destination.lat} longitude={destination.lon} />}
+            <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(INITIAL_ZOOM, setViewState)} locale={"en"}>
+              {start !== null && <Marker latitude={start.geoLocation.lat} longitude={start.geoLocation.lon} color="#000" />}
+              {destination !== null && <Marker latitude={destination.geoLocation.lat} longitude={destination.geoLocation.lon} color="#000" />}
             </Map>
           </DeckGL>
         </div>

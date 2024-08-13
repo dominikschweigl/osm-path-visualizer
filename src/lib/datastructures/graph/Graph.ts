@@ -54,8 +54,8 @@ export default class Graph {
 
   getNode(id: number): Node {
     const node = this.nodes.get(id);
-    if (!node) throw new Error(`Node {${id}} not stored in Graph`);
-    return node;
+    // if (!node) throw new Error(`Node {${id}} not stored in Graph`);
+    return node as Node;
   }
 
   getEdges(): Edge[] {

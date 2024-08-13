@@ -17,6 +17,16 @@ type Coordinates = {
   lon: number;
 };
 
+type MapLocation = {
+  street: string;
+  city: string;
+  region: string;
+  country: string;
+  addresstype: string;
+  importance: number;
+  geoLocation: GeoLocationPoint;
+};
+
 type BoundingBox = {
   top: number;
   bottom: number;
