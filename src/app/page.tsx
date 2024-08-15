@@ -299,7 +299,7 @@ export default function PathfindingVisualizer() {
                       <Radius className="size-5" />
                       <div className="grid gap-0.5">
                         <p>
-                          <span className="font-medium text-foreground">Djisktra's</span> Algorithm
+                          <span className="font-medium text-foreground">Djisktra&apos;s</span> Algorithm
                         </p>
                         <p className="text-xs" data-description>
                           The general method to find shortest paths
