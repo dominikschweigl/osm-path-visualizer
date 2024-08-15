@@ -18,6 +18,7 @@ type Coordinates = {
 };
 
 type MapLocation = {
+  type: "mapLocation";
   street: string;
   city: string;
   region: string;
@@ -35,5 +36,3 @@ type BoundingBox = {
 };
 
 type PathfindingAlgorithm = "dijkstra" | "a*";
-
-type AnimationSpeed = "slow" | "medium" | "fast";

@@ -2,7 +2,7 @@ export async function queryStreets(boundingBox: BoundingBox, signal: AbortSignal
   const streetQuery = `
     [out:json][bbox: ${boundingBox.bottom},${boundingBox.left},${boundingBox.top},${boundingBox.right}];
     (
-    way["highway"~"^(trunk|primary|secondary|tertiary|residential|unclassified)$"];
+    way["highway"~"^(motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|residential|unclassified|living_street)$"];
     >;
     );
     out skel qt;`;
@@ -17,6 +17,8 @@ export async function queryStreets(boundingBox: BoundingBox, signal: AbortSignal
 
   const data = await res.json();
   const elements: (GeoLocationPoint | GeoLocationWay)[] = data.elements;
+
+  console.log(elements.filter((e) => e.type == "way"));
 
   const nodes: GeoLocationPoint[] = [];
   const ways: GeoLocationWay[] = [];

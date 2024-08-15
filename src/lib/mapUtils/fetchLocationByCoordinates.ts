@@ -1,6 +1,6 @@
 import { MutableRefObject } from "react";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
-import { fetchError } from "../../lib/errors";
+import { fetchError } from "../../lib/constants";
 
 export default async function fetchLocationByCoordinates(
   latitude: number,
@@ -8,7 +8,6 @@ export default async function fetchLocationByCoordinates(
   zoom: number,
   previousController: MutableRefObject<AbortController> | null
 ): Promise<MapLocation> {
-  console.log(zoom);
   const controller = new AbortController();
   if (previousController) {
     previousController.current.abort(fetchError.ABORT);
@@ -23,9 +22,9 @@ export default async function fetchLocationByCoordinates(
     ).then((r) => r.json()),
     getNearestNode({ type: "coordinates", lat: latitude, lon: longitude }, null),
   ]);
-  console.log(location);
 
   const mapLocation: MapLocation = {
+    type: "mapLocation",
     street: location.address.road,
     city: location.address.city || location.address.town || location.address.village,
     region: location.address.state || location.address.county,

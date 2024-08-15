@@ -2,34 +2,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { Footprints, Goal, House, Locate, LocateFixed, MapPin, MapPinned, Building2, School, Route, Loader2 } from "lucide-react";
+import { Footprints, Goal, House, Locate, LocateFixed, MapPin, MapPinned, Building2, School, Route, Loader2, Search } from "lucide-react";
 import { MapViewState } from "@deck.gl/core";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
 import { Popover, PopoverTrigger } from "../ui/popover";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
 import { toast } from "sonner";
 import { CircleSlash } from "lucide-react";
-import { fetchError } from "../../lib/errors";
+import { fetchError } from "../../lib/constants";
 import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 import getMapZoomForDistance from "@/lib/mapUtils/getMapZoomForDistance";
 import LoadingSpinner from "../ui/spinner";
+import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
 
 const LOCATION_TYPES = ["city", "town", "village", "highway"];
 
 export default function LocationsInput({
   start,
   destination,
+  boundingBox,
+  searchLoading,
+  searchStarted,
   setStart,
   setDestination,
   setViewState,
   setSearchStarted,
+  setSearchLoading,
 }: {
   start: MapLocation | null;
   destination: MapLocation | null;
+  boundingBox: BoundingBox | null;
+  searchLoading: boolean;
+  searchStarted: boolean;
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewState: Dispatch<SetStateAction<MapViewState>>;
   setSearchStarted: Dispatch<SetStateAction<boolean>>;
+  setSearchLoading: Dispatch<SetStateAction<boolean>>;
 }) {
   const [locations, setLocations] = useState<Map<string, MapLocation>>(new Map());
 
@@ -47,13 +56,19 @@ export default function LocationsInput({
   const [destinationLoading, setDestinationLoading] = useState(false);
 
   useEffect(() => {
-    if (!start) return;
+    if (!start) {
+      setStartValue("");
+      return;
+    }
     setStartValue(`${start.city}, ${start.region}, ${start.country}`);
     locations.set(`${start.city}, ${start.region}, ${start.country}`, start);
   }, [start]);
 
   useEffect(() => {
-    if (!destination) return;
+    if (!destination) {
+      setDestinationValue("");
+      return;
+    }
     setDestinationValue(`${destination.city}, ${destination.region}, ${destination.country}`);
     locations.set(`${destination.city}, ${destination.region}, ${destination.country}`, destination);
   }, [destination]);
@@ -100,7 +115,7 @@ export default function LocationsInput({
               </CommandEmpty>
             ) : (
               <>
-                <CommandEmpty>No Locations found</CommandEmpty>
+                <CommandEmpty>No Locations found.</CommandEmpty>
                 {cities.length > 0 && (
                   <CommandGroup heading="Cities">
                     {cities
@@ -148,7 +163,7 @@ export default function LocationsInput({
                       ))}
                   </CommandGroup>
                 )}
-                {streets.length > 0 && (
+                {/* {streets.length > 0 && (
                   <>
                     <CommandSeparator />
                     <CommandGroup heading="Streets">
@@ -164,7 +179,7 @@ export default function LocationsInput({
                         ))}
                     </CommandGroup>
                   </>
-                )}
+                )} */}
               </>
             )}
           </CommandList>
@@ -197,7 +212,7 @@ export default function LocationsInput({
                 }
               }
             }}
-            // onBlur={() => setDestinationValue(destination ? `${destination.city}, ${destination.region}, ${destination.country}` : "")}
+            onBlur={() => setDestinationValue(destination ? `${destination.city}, ${destination.region}, ${destination.country}` : "")}
           />
           <CommandList>
             {destinationLoading ? (
@@ -222,6 +237,13 @@ export default function LocationsInput({
                             document.getElementById(document.activeElement?.id as string)?.blur();
 
                             try {
+                              if (!isWithinBoundingBox(location, boundingBox!)) {
+                                toast.error("Select a Destination inside your bounding circle", {
+                                  icon: <CircleSlash color="#db2424" />,
+                                  description: "Unlimited search will be added in version 2.0",
+                                });
+                                return;
+                              }
                               setDestination(location);
                               setViewState((prev) =>
                                 start
@@ -255,7 +277,7 @@ export default function LocationsInput({
                       ))}
                   </CommandGroup>
                 )}
-                {streets.length > 0 && (
+                {/* {streets.length > 0 && (
                   <>
                     <CommandSeparator />
                     <CommandGroup heading="Streets">
@@ -271,14 +293,23 @@ export default function LocationsInput({
                         ))}
                     </CommandGroup>
                   </>
-                )}
+                )} */}
               </>
             )}
           </CommandList>
         </Command>
       </div>
-      <Button onClick={() => setSearchStarted(true)} type="button" className="relative">
-        <Footprints size={16} className="left-4 mr-2" />
+      <Button
+        onClick={() => {
+          if (!start || !destination) return;
+          setSearchStarted(true);
+          setSearchLoading(true);
+        }}
+        type="button"
+        className="relative"
+        disabled={searchLoading || searchStarted}
+      >
+        {searchLoading ? <LoadingSpinner size={16} className="left-4 mr-2" /> : <Search size={16} className="left-4 mr-2" />}
         Search
       </Button>
     </fieldset>
@@ -296,10 +327,11 @@ async function fetchLocationsByName(searchInput: string, previousController: Mut
     });
     const data = await res.json();
 
-    const locations = new Map();
+    const locations = new Map<string, MapLocation>();
     for (const location of data) {
       if (!LOCATION_TYPES.includes(location.addresstype)) continue;
       locations.set(location.display_name, {
+        type: "mapLocation",
         street: location.address.road,
         city: location.address.city || location.address.town || location.address.village,
         region: location.address.state,

@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "@/styles/globals.css";
-import { Bird, Book, Bot, Code2, LifeBuoy, Rabbit, Settings, Settings2, Share, SquareTerminal, SquareUser, Triangle, Turtle } from "lucide-react";
+import { Bird, Compass, Rabbit, Settings, Turtle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import Link from "next/link";
 import { Toaster } from "sonner";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "OSM Path Visualizer",
@@ -26,98 +23,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <div className="grid h-screen w-full pl-[56px]">
-          <aside className="inset-y fixed  left-0 z-50 flex h-full flex-col border-r bg-white">
-            <div className="border-b p-2">
-              <Button variant="outline" size="icon" aria-label="Home">
-                <Triangle className="size-5 fill-foreground" />
-              </Button>
-            </div>
-            <nav className="grid gap-1 p-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={"/pathfinder"}>
-                      <Button variant="ghost" size="icon" className="rounded-lg bg-muted" aria-label="Playground">
-                        <SquareTerminal className="size-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Pathfinding Visualizer
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Models">
-                      <Bot className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Models
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-lg" aria-label="API">
-                      <Code2 className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    API
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Documentation">
-                      <Book className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Documentation
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Settings">
-                      <Settings2 className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Settings
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </nav>
-            <nav className="mt-auto grid gap-1 p-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="mt-auto rounded-lg" aria-label="Help">
-                      <LifeBuoy className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Help
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="mt-auto rounded-lg" aria-label="Account">
-                      <SquareUser className="size-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={5}>
-                    Account
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </nav>
-          </aside>
+      <body className={GeistSans.className}>
+        <div className="grid h-screen w-full">
           <div className="flex flex-col">
-            <header className="sticky top-0 z-40 flex h-[57px] items-center gap-1 border-b bg-background p-4">
-              <h1 className="text-xl font-semibold">Pathfinding Visualizer</h1>
+            <header className="sticky top-0 z-40 flex items-center gap-2 border-b bg-background p-4">
+              <Compass size={24} />
+              <h1 className="text-lg font-semibold">OSM Pathfinding Visualizer</h1>
+              <Badge variant={"secondary"}>v 1.0</Badge>
               <Drawer>
                 <DrawerTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
@@ -217,10 +129,10 @@ export default function RootLayout({
                   </form>
                 </DrawerContent>
               </Drawer>
-              <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
+              {/* <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
                 <Share className="size-3.5" />
                 Share
-              </Button>
+              </Button> */}
             </header>
 
             {children}

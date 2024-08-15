@@ -2,7 +2,7 @@ import { createGeoJSONCircle } from "./createGeoJSONCircle";
 import getBoundingBoxFromPolygon from "./getBoundingBoxFromPolygon";
 import { queryNodes } from "./overpassQuery";
 import distanceBetweenNodes from "./distanceBetweenNodes";
-import { fetchError } from "../errors";
+import { fetchError } from "../constants";
 
 const SEARCH_RADIUS: number = 2; //in km
 
