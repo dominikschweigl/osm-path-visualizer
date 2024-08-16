@@ -84,7 +84,7 @@ export default function LocationsInput({
           <CommandInput
             id="start"
             value={`${startValue}`}
-            icon={<MapPinned className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
+            // icon={<MapPinned className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
             placeholder="Search for a starting location..."
             onValueChange={async (s) => {
               setStartValue(s);
@@ -191,7 +191,7 @@ export default function LocationsInput({
           <CommandInput
             id="destination"
             value={destinationValue}
-            icon={<Goal className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
+            // icon={<Goal className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
             placeholder="Search for a destination location..."
             onValueChange={async (s) => {
               setDestinationValue(s);
@@ -309,7 +309,7 @@ export default function LocationsInput({
         className="relative"
         disabled={searchLoading || searchStarted}
       >
-        {searchLoading ? <LoadingSpinner size={16} className="left-4 mr-2" /> : <Search size={16} className="left-4 mr-2" />}
+        {searchLoading ? <LoadingSpinner size={16} className="left-4 mr-2" /> : <Route size={16} className="left-4 mr-2" />}
         Search
       </Button>
     </fieldset>
