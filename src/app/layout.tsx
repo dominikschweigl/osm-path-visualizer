@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toaster } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import TutorialDialog from "@/components/layouts/TutorialDialog";
 
 export const metadata: Metadata = {
   title: "OSM Path Visualizer",
@@ -29,7 +30,7 @@ export default function RootLayout({
             <header className="sticky top-0 z-40 flex items-center gap-2 border-b bg-background p-4">
               <Compass size={24} />
               <h1 className="text-lg font-semibold">OSM Pathfinding Visualizer</h1>
-              <Badge variant={"secondary"}>v 1.0</Badge>
+              <Badge variant={"secondary"}>v 1.1</Badge>
               <Drawer>
                 <DrawerTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
@@ -129,12 +130,10 @@ export default function RootLayout({
                   </form>
                 </DrawerContent>
               </Drawer>
-              {/* <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
-                <Share className="size-3.5" />
-                Share
-              </Button> */}
+              <div className="ml-auto">
+                <TutorialDialog />
+              </div>
             </header>
-
             {children}
             <Toaster />
           </div>

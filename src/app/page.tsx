@@ -1,5 +1,8 @@
 "use client";
-import Map, { Marker, MapRef, MapStyle, Popup } from "react-map-gl/maplibre";
+
+import Map, { Marker, MapRef, MapStyle, Popup, useControl } from "react-map-gl/maplibre";
+import { MapboxOverlay } from "@deck.gl/mapbox";
+import { DeckProps } from "@deck.gl/core";
 import "maplibre-gl/dist/maplibre-gl.css";
 import DeckGL, { DeckGLRef } from "@deck.gl/react";
 import { PolygonLayer } from "@deck.gl/layers";
@@ -53,6 +56,7 @@ import AStarPathfinder from "@/lib/pathFindingAlgorithms/AStarPathFinder";
 import { Slider } from "@/components/ui/slider";
 import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
 import LoadingSpinner from "@/components/ui/spinner";
+import TutorialDialog from "@/components/layouts/TutorialDialog";
 
 const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 const INITIAL_ZOOM = 10;
@@ -397,7 +401,6 @@ export default function PathfindingVisualizer() {
           <DeckGL
             initialViewState={viewState}
             controller={{ doubleClickZoom: false, dragRotate: true, inertia: true }}
-            layers={layers}
             onClick={(info, event) => {
               handleMapClick(info, event, setStart, setDestination, bound, lastClick, previousClickAbortController);
             }}
@@ -405,6 +408,10 @@ export default function PathfindingVisualizer() {
             <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(INITIAL_ZOOM, setViewState)} locale={"en"}>
               {start !== null && <Marker latitude={start.geoLocation.lat} longitude={start.geoLocation.lon} color="#000" />}
               {destination !== null && <Marker latitude={destination.geoLocation.lat} longitude={destination.geoLocation.lon} color="#000" />}
+              {
+                //@ts-ignore
+                <DeckGLOverlay layers={layers} interleaved />
+              }
             </Map>
           </DeckGL>
         </div>
@@ -416,4 +423,10 @@ export default function PathfindingVisualizer() {
       </div>
     </main>
   );
+}
+
+function DeckGLOverlay(props: DeckProps) {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
 }
