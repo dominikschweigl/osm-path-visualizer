@@ -1,3 +1,4 @@
+import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 import Node from "./Node";
 
 export default class Edge {
@@ -8,7 +9,7 @@ export default class Edge {
   constructor(start: Node, end: Node) {
     this.start = start;
     this.end = end;
-    this.length = 0;
+    this.length = distanceBetweenNodes(start, end);
   }
 
   getStart(): Node {

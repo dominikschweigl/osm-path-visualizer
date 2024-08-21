@@ -18,8 +18,6 @@ export async function queryStreets(boundingBox: BoundingBox, signal: AbortSignal
   const data = await res.json();
   const elements: (GeoLocationPoint | GeoLocationWay)[] = data.elements;
 
-  console.log(elements.filter((e) => e.type == "way"));
-
   const nodes: GeoLocationPoint[] = [];
   const ways: GeoLocationWay[] = [];
 

@@ -57,6 +57,8 @@ import { Slider } from "@/components/ui/slider";
 import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
 import LoadingSpinner from "@/components/ui/spinner";
 import TutorialDialog from "@/components/layouts/TutorialDialog";
+import PlaybackControls from "@/components/layouts/controls/playback";
+import usePathfindingAnimation from "@/hooks/usePathfindingAnimation";
 
 const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 const INITIAL_ZOOM = 10;
@@ -75,75 +77,27 @@ export default function PathfindingVisualizer() {
   const [start, setStart] = useState<MapLocation | null>(null);
   const [destination, setDestination] = useState<MapLocation | null>(null);
 
-  const [graph, setGraph] = useState<Graph>();
-  const [pathfinder, setPathfinder] = useState<Pathfinder>();
+  const [graph, setGraph] = useState<Graph | null>(null);
   const [searchPaths, setSearchPaths] = useState<Edge[]>([]);
   const [shortestPath, setShortestPath] = useState<Edge[]>([]);
 
-  const [time, setTime] = useState<number>(0);
-
   const bound: BoundingBox | null = start && getBoundingBoxFromPolygon(createGeoJSONCircle(start.geoLocation, searchRadius));
-
-  const [searchStarted, setSearchStarted] = useState(false);
-  const [shortestPathTrackStarted, setShortestPathTrackStarted] = useState(false);
 
   const [pathfindingAlgorithm, setPathfindingAlgorithm] = useState<PathfindingAlgorithm>("a*");
 
-  const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(AnimationSpeed.Medium);
+  const { searchLayerTime, time, setTime, maxTime, isAnimationPlaying, animationSpeed, setAnimationSpeed, retractSearchPaths, setRetractSearchPaths, animation } =
+    usePathfindingAnimation({
+      graph,
+      start,
+      destination,
+    });
 
   const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
-    if (!searchStarted || !pathfinder || searchPaths.length) {
-      return;
-    }
-
-    while (!pathfinder.nextSearchStep(setSearchPaths));
-    setSearchLoading(false);
-  }, [searchStarted]);
-
-  useEffect(() => {
-    if (!searchStarted || !graph || !start || !destination) {
-      setSearchStarted(false);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      const isSmallDistance = distanceBetweenNodes(start.geoLocation, destination.geoLocation) < 2 ? 1 : 0;
-      setTime((prev) => prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance); //time for animation to reach destination
-
-      if (time >= graph.getNode(destination.geoLocation.id).getVisitTime()) {
-        setShortestPathTrackStarted(true);
-      }
-    }, 1);
-
-    return () => clearInterval(interval);
-  }, [searchStarted, time]);
-
-  useEffect(() => {
-    if (!shortestPathTrackStarted) return;
-
-    const interval = setInterval(() => {
-      if (!pathfinder) {
-        clearInterval(interval);
-        return;
-      }
-      const startFound = pathfinder.nextTrackBackPathStep(setShortestPath);
-      if (startFound) {
-        clearInterval(interval);
-        setSearchStarted(false);
-      }
-    }, 1);
-
-    return () => clearInterval(interval);
-  }, [shortestPathTrackStarted]);
-
-  useEffect(() => {
     setSearchPaths([]);
     setShortestPath([]);
-    setSearchStarted(false);
-    setShortestPathTrackStarted(false);
-    setTime(0);
+    animation.reset();
 
     if (!start || !destination) return;
 
@@ -157,8 +111,14 @@ export default function PathfindingVisualizer() {
           nodes,
           ways
         );
+
+        const pathfinder = pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph);
+
+        while (!pathfinder.nextSearchStep(setSearchPaths));
+        setShortestPath(pathfinder.getShortestPath());
+
         setGraph(newGraph);
-        setPathfinder(pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph));
+        animation.play();
         setSearchLoading(false);
       })
       .catch(() => {
@@ -169,16 +129,13 @@ export default function PathfindingVisualizer() {
       setSearchLoading(false);
       controller.abort(fetchError.ABORT);
     };
-  }, [start, destination]);
+  }, [start, destination, pathfindingAlgorithm]);
 
   useEffect(() => {
     if (!graph) return;
-    setPathfinder(pathfindingAlgorithm == "a*" ? new AStarPathfinder(graph) : new DijkstraPathFinder(graph));
     setSearchPaths([]);
     setShortestPath([]);
-    setTime(0);
-    setSearchStarted(false);
-    setShortestPathTrackStarted(false);
+    animation.reset();
   }, [pathfindingAlgorithm]);
 
   useEffect(() => {
@@ -186,16 +143,6 @@ export default function PathfindingVisualizer() {
       setDestination(null);
     }
   }, [searchRadius]);
-
-  useEffect(() => {
-    if (!graph) return;
-    setSearchPaths([]);
-    setShortestPath([]);
-    setSearchStarted(false);
-    setShortestPathTrackStarted(false);
-    setTime(0);
-    setPathfinder(pathfindingAlgorithm == "a*" ? new AStarPathfinder(graph) : new DijkstraPathFinder(graph));
-  }, [animationSpeed]);
 
   const layers = [
     // new TripsLayer<Edge>({
@@ -219,9 +166,9 @@ export default function PathfindingVisualizer() {
         [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
       ],
       getTimestamps: (e) => {
-        return [Math.fround(e.getStart().getVisitTime()), Math.fround(e.getEnd().getVisitTime())];
+        return [Math.fround(e.getStart().getSearchVisitTime()), Math.fround(e.getEnd().getSearchVisitTime())];
       },
-      currentTime: time,
+      currentTime: searchLayerTime,
       getColor: [0, 0, 0],
       fadeTrail: false,
       capRounded: true,
@@ -235,6 +182,10 @@ export default function PathfindingVisualizer() {
         [e.getStart().getLongitude(), e.getStart().getLatitude()],
         [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
       ],
+      currentTime: time,
+      getTimestamps: (e) => {
+        return [Math.fround(e.getStart().getTrackBackVisitTime()), Math.fround(e.getEnd().getTrackBackVisitTime())];
+      },
       getColor: [13, 131, 252],
       fadeTrail: false,
       capRounded: true,
@@ -254,8 +205,6 @@ export default function PathfindingVisualizer() {
     }),
   ];
 
-  const deck = useRef<HTMLDivElement>(null);
-
   const lastClick = useRef<number>(0);
 
   const previousClickAbortController = useRef<AbortController | null>(null);
@@ -269,11 +218,10 @@ export default function PathfindingVisualizer() {
             destination={destination}
             boundingBox={bound}
             searchLoading={searchLoading}
-            searchStarted={searchStarted}
+            searchStarted={isAnimationPlaying}
             setStart={setStart}
             setDestination={setDestination}
             setViewState={setViewState}
-            setSearchStarted={setSearchStarted}
             setSearchLoading={setSearchLoading}
           />
           <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
@@ -368,17 +316,6 @@ export default function PathfindingVisualizer() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="animationTime">Animation Time</Label>
-              <Slider
-                id={"animationTime"}
-                max={graph && destination ? graph?.getNode(destination.geoLocation.id)?.getVisitTime() : 0}
-                min={0}
-                step={0.01}
-                value={[time]}
-                onValueChange={([time]) => setTime(time)}
-              />
-            </div>
             <div className="flex-col gap-4">
               <Label htmlFor="search-radius">Search Radius</Label>
               <div className="flex gap-2">
@@ -391,13 +328,26 @@ export default function PathfindingVisualizer() {
               </div>
             </div>
           </fieldset>
+          <PlaybackControls
+            time={time}
+            maxTime={maxTime}
+            isAnimationPlaying={isAnimationPlaying}
+            retractSearchPaths={retractSearchPaths}
+            setRetractSearchPaths={setRetractSearchPaths}
+            setTime={setTime}
+            play={animation.play}
+            pause={animation.pause}
+            reset={animation.reset}
+            restart={animation.restart}
+            finish={animation.finish}
+          />
         </form>
       </div>
       <div className="relative flex min-h-[50vh] flex-col rounded-lg bg-muted/50 p-4 lg:col-span-3 overflow-hidden border mt-[9px] ">
         <Badge variant="outline" className="absolute right-3 top-3 bg-white z-10">
           Output
         </Badge>
-        <div ref={deck} onContextMenu={(e) => e.preventDefault()}>
+        <div onContextMenu={(e) => e.preventDefault()}>
           <DeckGL
             initialViewState={viewState}
             controller={{ doubleClickZoom: false, dragRotate: true, inertia: true }}

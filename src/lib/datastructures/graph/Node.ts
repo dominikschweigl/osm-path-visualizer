@@ -7,7 +7,8 @@ export default class Node {
   private longitude: number;
   private edges: Map<number, Edge>;
   private distance: number;
-  private visitTime: number;
+  private searchVisitTime: number;
+  private trackBackVisitTime: number;
 
   constructor(id: number, latitude: number, longitude: number) {
     this.id = id;
@@ -15,7 +16,8 @@ export default class Node {
     this.longitude = longitude;
     this.edges = new Map<number, Edge>();
     this.distance = Number.MAX_VALUE;
-    this.visitTime = Number.MAX_VALUE;
+    this.searchVisitTime = Number.MAX_VALUE;
+    this.trackBackVisitTime = Number.MAX_VALUE;
   }
 
   getEdges(): Edge[] {
@@ -48,15 +50,23 @@ export default class Node {
     return this.distance;
   }
 
-  getVisitTime(): number {
-    return this.visitTime;
+  getSearchVisitTime(): number {
+    return this.searchVisitTime;
+  }
+
+  getTrackBackVisitTime(): number {
+    return this.trackBackVisitTime;
   }
 
   setDistance(distance: number): void {
     this.distance = distance;
   }
 
-  setVisitTime(time: number): void {
-    this.visitTime = time;
+  setSearchVisitTime(time: number): void {
+    this.searchVisitTime = time;
+  }
+
+  setTrackBackVisitTime(time: number): void {
+    this.trackBackVisitTime = time;
   }
 }

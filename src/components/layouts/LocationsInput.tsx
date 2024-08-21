@@ -26,7 +26,6 @@ export default function LocationsInput({
   setStart,
   setDestination,
   setViewState,
-  setSearchStarted,
   setSearchLoading,
 }: {
   start: MapLocation | null;
@@ -37,7 +36,6 @@ export default function LocationsInput({
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewState: Dispatch<SetStateAction<MapViewState>>;
-  setSearchStarted: Dispatch<SetStateAction<boolean>>;
   setSearchLoading: Dispatch<SetStateAction<boolean>>;
 }) {
   const [locations, setLocations] = useState<Map<string, MapLocation>>(new Map());
@@ -299,11 +297,9 @@ export default function LocationsInput({
           </CommandList>
         </Command>
       </div>
-      <Button
+      {/* <Button
         onClick={() => {
           if (!start || !destination) return;
-          setSearchStarted(true);
-          setSearchLoading(true);
         }}
         type="button"
         className="relative"
@@ -311,7 +307,7 @@ export default function LocationsInput({
       >
         {searchLoading ? <LoadingSpinner size={16} className="left-4 mr-2" /> : <Route size={16} className="left-4 mr-2" />}
         Search
-      </Button>
+      </Button> */}
     </fieldset>
   );
 }

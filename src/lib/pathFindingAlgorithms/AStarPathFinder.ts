@@ -45,7 +45,7 @@ export default class AStarPathfinder implements Pathfinder {
       const neighbor: Node = edge.opposite(nearestNode);
       if (this.predecessors.get(nearestNode.getID())?.getID() === neighbor.getID()) return;
 
-      neighbor.setVisitTime(this.currentSearchNode);
+      neighbor.setSearchVisitTime(this.currentSearchNode);
       this.currentSearchNode++;
 
       this.searchedPaths.push(edge);
@@ -73,5 +73,30 @@ export default class AStarPathfinder implements Pathfinder {
     this.currentShortestPathNode = predecessor;
 
     return false;
+  }
+
+  getShortestPath(): Edge[] {
+    if (!this.predecessors.get(this.graph.getDestination().getID())) throw new Error("cannot return shortest path before searching");
+
+    const path = [];
+    let current = this.currentShortestPathNode;
+    let time = this.currentSearchNode;
+    current.setTrackBackVisitTime(time);
+    time++;
+
+    while (current !== this.graph.getSource()) {
+      const predecessor = this.predecessors.get(current.getID())!;
+      path.push(current.getEdge(predecessor));
+      current = predecessor;
+      current.setTrackBackVisitTime(time);
+      time++;
+    }
+
+    return path;
+  }
+
+  getShortestDistance(): number {
+    const shortestPath = this.getShortestPath();
+    return shortestPath.map((e) => e.getLength()).reduce((a, b) => a + b);
   }
 }

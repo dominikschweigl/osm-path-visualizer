@@ -15,7 +15,7 @@ export default class Graph {
     this.nodes.set(this.sourceID, source);
     this.nodes.set(this.destinationID, destination);
     source.setDistance(0);
-    source.setVisitTime(0);
+    source.setSearchVisitTime(0);
 
     if (nodes && ways) {
       for (const node of nodes) {
