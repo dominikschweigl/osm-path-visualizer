@@ -35,7 +35,7 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
   const [isAnimationPlaying, setIsAnimationPlaying] = useState(false);
   const [time, setTime] = useState<number>(0);
 
-  const maxTime = graph ? graph.getSource().getTrackBackVisitTime() + (retractSearchPaths ? graph.getDestination().getSearchVisitTime() : 0) : 0;
+  const maxTime = graph ? graph.getSource().getTrackBackVisitTime() + (retractSearchPaths ? graph.getDestination().getSearchVisitTime() : 0) : Number.MAX_VALUE;
 
   useEffect(() => {
     if (!isAnimationPlaying || !graph || !start || !destination) {
@@ -45,9 +45,18 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
 
     const interval = setInterval(() => {
       const isSmallDistance = distanceBetweenNodes(start.geoLocation, destination.geoLocation) < 2 ? 2 : 0;
-      setTime((prev) => Math.min(maxTime, prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance));
 
-      if (time >= maxTime) {
+      setTime((prev) => {
+        // const graphSearchTime =
+        //   graph
+        //     ?.getNodes()
+        //     .map((n) => n.getSearchVisitTime())
+        //     .reduce((prev, curr) => (curr < Number.MAX_VALUE && curr > prev ? curr : prev), 0) || 0;
+        const nextTime = prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance;
+        return Math.min(maxTime, nextTime);
+      });
+
+      if (time === maxTime) {
         clearInterval(interval);
         setIsAnimationPlaying(false);
       }
@@ -64,7 +73,7 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
   }, [retractSearchPaths]);
 
   return {
-    searchLayerTime: graph && time <= graph.getSource().getTrackBackVisitTime() ? time : maxTime - time,
+    searchLayerTime: graph ? (time <= graph.getSource().getTrackBackVisitTime() ? time : maxTime - time) : 0,
     time: time,
     setTime: setTime,
     maxTime: maxTime,
@@ -74,9 +83,7 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
     retractSearchPaths: retractSearchPaths,
     setRetractSearchPaths: setRetractSearchPaths,
     animation: {
-      play: () => {
-        /* if (time < maxTime)*/ setIsAnimationPlaying(true);
-      },
+      play: () => setIsAnimationPlaying(true),
       pause: () => setIsAnimationPlaying(false),
       reset: () => {
         setTime(0), setIsAnimationPlaying(false);
@@ -84,7 +91,7 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
       restart: () => {
         setTime(0), setIsAnimationPlaying(true);
       },
-      finish: () => setTime(maxTime),
+      finish: () => setTime(maxTime < Number.MAX_VALUE ? maxTime : time),
     },
   };
 }

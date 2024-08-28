@@ -8,7 +8,6 @@ import { Pathfinder } from "./interface";
 import { createBoundingBox } from "../mapUtils/createBoundingBox";
 import { createSearchTile } from "../mapUtils/createSearchTile";
 import { queryStreets } from "../mapUtils/overpassQuery";
-import isWithinBoundingBox from "../mapUtils/isWithinBoundingBox";
 
 export default class AStarPathfinder implements Pathfinder {
   private graph: Graph;
@@ -39,9 +38,11 @@ export default class AStarPathfinder implements Pathfinder {
    */
   async nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>, setSearchTile: Dispatch<SetStateAction<BoundingBox | null>>): Promise<boolean> {
     if (this.heap.peek().getDistance() === Number.MAX_VALUE) {
-      setSearchedPaths(this.searchedPaths);
+      setSearchedPaths([...this.searchedPaths]);
       console.error("no connection to next node");
-      return true;
+      return new Promise<boolean>((resolve) => {
+        resolve(true);
+      });
     }
 
     if (!this.heap.peek().getIsInsideSeenArea()) {
@@ -51,6 +52,7 @@ export default class AStarPathfinder implements Pathfinder {
         this.heap.peek().getGeoLocation()
       );
       setSearchTile(tile);
+      setSearchedPaths([...this.searchedPaths]);
 
       const streets = await queryStreets(tile, null);
       const nodes = this.graph.addWays(...streets, tile);
@@ -67,7 +69,7 @@ export default class AStarPathfinder implements Pathfinder {
     const nearestNode = this.heap.remove();
 
     if (nearestNode.getID() === destination.getID()) {
-      setSearchedPaths(this.searchedPaths);
+      setSearchedPaths([...this.searchedPaths]);
       setSearchTile(null);
       return new Promise<boolean>((resolve) => {
         resolve(true);

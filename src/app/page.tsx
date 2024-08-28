@@ -107,7 +107,7 @@ export default function PathfindingVisualizer() {
     setShortestPath([]);
     animation.reset();
 
-    if (!start || !destination || !bound) return;
+    if (!start || !destination || !bound || searchLoading) return;
 
     const controller = new AbortController();
     setSearchLoading(true);
@@ -120,11 +120,8 @@ export default function PathfindingVisualizer() {
           ways,
           bound
         );
-
-        const pathfinder =
-          pathfindingAlgorithm === "a*"
-            ? new AStarPathfinder(newGraph, Math.min(30, distanceBetweenNodes(start.geoLocation, destination.geoLocation) / 4))
-            : new DijkstraPathFinder(newGraph);
+        const searchTileSize = Math.min(30, distanceBetweenNodes(start.geoLocation, destination.geoLocation) / 4);
+        const pathfinder = pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph, searchTileSize) : new DijkstraPathFinder(newGraph, searchTileSize);
 
         (async () => {
           let found = false;
@@ -132,10 +129,10 @@ export default function PathfindingVisualizer() {
             found = await pathfinder.nextSearchStep(setSearchPaths, setSearchTile);
           }
           setShortestPath(pathfinder.getShortestPath());
+          animation.play();
 
           setGraph(newGraph);
           setSearchLoading(false);
-          animation.play();
         })();
       })
       .catch(() => {

@@ -5,6 +5,9 @@ import Edge from "../datastructures/graph/Edge";
 import distanceBetweenNodes from "../mapUtils/distanceBetweenNodes";
 import { SetStateAction, Dispatch } from "react";
 import { Pathfinder } from "./interface";
+import { createBoundingBox } from "../mapUtils/createBoundingBox";
+import { createSearchTile } from "../mapUtils/createSearchTile";
+import { queryStreets } from "../mapUtils/overpassQuery";
 
 export default class DijkstraPathFinder implements Pathfinder {
   private graph: Graph;
@@ -17,13 +20,16 @@ export default class DijkstraPathFinder implements Pathfinder {
 
   private currentShortestPathNode: Node;
 
-  constructor(graph: Graph) {
+  private searchTileSideLength: number;
+
+  constructor(graph: Graph, searchTileSideLength: number) {
     this.graph = graph;
     this.currentShortestPathNode = graph.getDestination();
     this.currentSearchNode = 1;
     this.searchedPaths = [];
     this.predecessors = new Map();
     this.heap = new NodeHeap(graph.getSource(), graph.getNodes());
+    this.searchTileSideLength = searchTileSideLength;
   }
 
   /**
@@ -31,18 +37,44 @@ export default class DijkstraPathFinder implements Pathfinder {
    * @param setSearchedPaths
    * @returns true if end has been reached
    */
-  nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>): boolean {
+  async nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>, setSearchTile: Dispatch<SetStateAction<BoundingBox | null>>): Promise<boolean> {
     if (this.heap.peek().getDistance() === Number.MAX_VALUE) {
       console.error("no connection to next node");
-      return true;
+      setSearchedPaths([...this.searchedPaths]);
+      return new Promise<boolean>((resolve) => {
+        resolve(true);
+      });
+    }
+
+    if (!this.heap.peek().getIsInsideSeenArea()) {
+      const tile: BoundingBox = createSearchTile(
+        createBoundingBox(this.graph.getSource().getGeoLocation(), this.searchTileSideLength),
+        this.searchTileSideLength,
+        this.heap.peek().getGeoLocation()
+      );
+      setSearchTile(tile);
+      setSearchedPaths([...this.searchedPaths]);
+
+      const streets = await queryStreets(tile, null);
+      const nodes = this.graph.addWays(...streets, tile);
+      for (const node of nodes) {
+        this.heap.add(node, node.getDistance());
+      }
+
+      return new Promise<boolean>((resolve) => {
+        resolve(false);
+      });
     }
 
     const destination: Node = this.graph.getDestination();
     const nearestNode = this.heap.remove();
 
     if (nearestNode.getID() === destination.getID()) {
-      setSearchedPaths(this.searchedPaths);
-      return true;
+      setSearchedPaths([...this.searchedPaths]);
+      setSearchTile(null);
+      return new Promise<boolean>((resolve) => {
+        resolve(true);
+      });
     }
 
     nearestNode.getEdges().forEach((edge) => {
