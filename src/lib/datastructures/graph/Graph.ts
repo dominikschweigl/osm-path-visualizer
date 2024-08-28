@@ -1,5 +1,7 @@
+import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
 import Edge from "./Edge";
 import Node from "./Node";
+import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 
 export default class Graph {
   private nodes: Map<number, Node>;
@@ -7,7 +9,7 @@ export default class Graph {
   private sourceID: number;
   private destinationID: number;
 
-  constructor(source: Node, destination: Node, nodes?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
+  constructor(source: Node, destination: Node, geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox) {
     this.sourceID = source.getID();
     this.destinationID = destination.getID();
     this.edges = [];
@@ -16,28 +18,9 @@ export default class Graph {
     this.nodes.set(this.destinationID, destination);
     source.setDistance(0);
     source.setSearchVisitTime(0);
+    source.setIsInsideSeenArea(true);
 
-    if (nodes && ways) {
-      for (const node of nodes) {
-        if (this.nodes.has(node.id)) continue;
-        this.nodes.set(node.id, new Node(node.id, node.lat, node.lon));
-      }
-      for (const way of ways) {
-        for (let i = 1; i < way.nodes.length; i++) {
-          const start = this.nodes.get(way.nodes[i - 1]);
-          const end = this.nodes.get(way.nodes[i]);
-          if (!start || !end) continue;
-
-          const startEdge: Edge = new Edge(start, end);
-          const endEdge: Edge = new Edge(end, start);
-          this.edges.push(startEdge);
-          this.edges.push(endEdge);
-
-          start.addEdge(end, startEdge);
-          end.addEdge(start, endEdge);
-        }
-      }
-    }
+    this.addWays(geolocations, ways, bound);
   }
 
   getSource(): Node {
@@ -60,5 +43,38 @@ export default class Graph {
 
   getEdges(): Edge[] {
     return [...this.edges];
+  }
+
+  addWays(geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox): Node[] {
+    const nodes: Node[] = [];
+
+    for (const geolocation of geolocations) {
+      let node = this.nodes.get(geolocation.id);
+      if (!node) {
+        node = new Node(geolocation.id, geolocation.lat, geolocation.lon);
+        this.nodes.set(geolocation.id, node);
+        nodes.push(node);
+      }
+      node.setIsInsideSeenArea(node.getIsInsideSeenArea() || isWithinBoundingBox(node.getGeoLocation(), bound));
+    }
+
+    for (const way of ways) {
+      for (let i = 1; i < way.nodes.length; i++) {
+        const start = this.nodes.get(way.nodes[i - 1]);
+        const end = this.nodes.get(way.nodes[i]);
+
+        if (!start || !end || start.hasConnection(end)) continue;
+
+        const startEdge: Edge = new Edge(start, end);
+        const endEdge: Edge = new Edge(end, start);
+        this.edges.push(startEdge);
+        this.edges.push(endEdge);
+
+        start.addEdge(startEdge);
+        end.addEdge(endEdge);
+      }
+    }
+
+    return nodes;
   }
 }

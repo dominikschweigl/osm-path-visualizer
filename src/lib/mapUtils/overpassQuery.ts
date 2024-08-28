@@ -1,4 +1,4 @@
-export async function queryStreets(boundingBox: BoundingBox, signal: AbortSignal): Promise<[nodes: GeoLocationPoint[], ways: GeoLocationWay[]]> {
+export async function queryStreets(boundingBox: BoundingBox, signal: AbortSignal | null): Promise<[nodes: GeoLocationPoint[], ways: GeoLocationWay[]]> {
   const streetQuery = `
     [out:json][bbox: ${boundingBox.bottom},${boundingBox.left},${boundingBox.top},${boundingBox.right}];
     (

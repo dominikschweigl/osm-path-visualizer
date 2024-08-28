@@ -9,8 +9,9 @@ export default class Node {
   private distance: number;
   private searchVisitTime: number;
   private trackBackVisitTime: number;
+  private isInsideSeenArea: boolean;
 
-  constructor(id: number, latitude: number, longitude: number) {
+  constructor(id: number, latitude: number, longitude: number, isInsideSeenArea?: boolean) {
     this.id = id;
     this.latitude = latitude;
     this.longitude = longitude;
@@ -18,6 +19,7 @@ export default class Node {
     this.distance = Number.MAX_VALUE;
     this.searchVisitTime = Number.MAX_VALUE;
     this.trackBackVisitTime = Number.MAX_VALUE;
+    this.isInsideSeenArea = isInsideSeenArea || false;
   }
 
   getEdges(): Edge[] {
@@ -30,8 +32,8 @@ export default class Node {
     return edge;
   }
 
-  addEdge(node: Node, edge: Edge): void {
-    this.edges.set(node.getID(), edge);
+  addEdge(edge: Edge): void {
+    this.edges.set(edge.opposite(this).getID(), edge);
   }
 
   getLatitude(): number {
@@ -68,5 +70,21 @@ export default class Node {
 
   setTrackBackVisitTime(time: number): void {
     this.trackBackVisitTime = time;
+  }
+
+  getGeoLocation(): GeoLocationPoint {
+    return { type: "node", id: this.id, lat: this.latitude, lon: this.longitude };
+  }
+
+  getIsInsideSeenArea(): boolean {
+    return this.isInsideSeenArea;
+  }
+
+  setIsInsideSeenArea(isInsideSeenArea: boolean): void {
+    this.isInsideSeenArea = isInsideSeenArea;
+  }
+
+  hasConnection(node: Node): boolean {
+    return this.edges.has(node.getID());
   }
 }

@@ -8,7 +8,7 @@ import DeckGL, { DeckGLRef } from "@deck.gl/react";
 import { PolygonLayer } from "@deck.gl/layers";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { FlyToInterpolator, MapViewState } from "@deck.gl/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { queryStreets } from "@/lib/mapUtils/overpassQuery";
 import Graph from "@/lib/datastructures/graph/Graph";
 import Edge from "@/lib/datastructures/graph/Edge";
@@ -59,6 +59,8 @@ import LoadingSpinner from "@/components/ui/spinner";
 import TutorialDialog from "@/components/layouts/TutorialDialog";
 import PlaybackControls from "@/components/layouts/controls/playback";
 import usePathfindingAnimation from "@/hooks/usePathfindingAnimation";
+import { createBoundingBox } from "@/lib/mapUtils/createBoundingBox";
+import { createSearchTile } from "@/lib/mapUtils/createSearchTile";
 
 const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 const INITIAL_ZOOM = 10;
@@ -70,18 +72,24 @@ export default function PathfindingVisualizer() {
     zoom: INITIAL_ZOOM,
     transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
     transitionDuration: "auto",
+    pitch: 0,
   });
 
-  const [searchRadius, setSearchRadius] = useState<number>(10);
+  const [searchRadius, setSearchRadius] = useState<number>(1);
 
   const [start, setStart] = useState<MapLocation | null>(null);
   const [destination, setDestination] = useState<MapLocation | null>(null);
 
   const [graph, setGraph] = useState<Graph | null>(null);
   const [searchPaths, setSearchPaths] = useState<Edge[]>([]);
+  const loadedPaths = useMemo<Edge[]>(() => (graph ? graph.getEdges() : []), [graph]);
   const [shortestPath, setShortestPath] = useState<Edge[]>([]);
 
-  const bound: BoundingBox | null = start && getBoundingBoxFromPolygon(createGeoJSONCircle(start.geoLocation, searchRadius));
+  const bound: BoundingBox | null = start && createBoundingBox(start.geoLocation, searchRadius);
+
+  const tile: BoundingBox | null = bound && destination && createSearchTile(bound, searchRadius, destination.geoLocation);
+
+  const [searchTile, setSearchTile] = useState<BoundingBox | null>(null);
 
   const [pathfindingAlgorithm, setPathfindingAlgorithm] = useState<PathfindingAlgorithm>("a*");
 
@@ -99,27 +107,36 @@ export default function PathfindingVisualizer() {
     setShortestPath([]);
     animation.reset();
 
-    if (!start || !destination) return;
+    if (!start || !destination || !bound) return;
 
     const controller = new AbortController();
     setSearchLoading(true);
-    queryStreets(bound!, controller.signal)
+    queryStreets(bound, controller.signal)
       .then(([nodes, ways]) => {
         const newGraph = new Graph(
           new Node(start.geoLocation.id, start.geoLocation.lat, start.geoLocation.lon),
           new Node(destination.geoLocation.id, destination.geoLocation.lat, destination.geoLocation.lon),
           nodes,
-          ways
+          ways,
+          bound
         );
 
-        const pathfinder = pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph) : new DijkstraPathFinder(newGraph);
+        const pathfinder =
+          pathfindingAlgorithm === "a*"
+            ? new AStarPathfinder(newGraph, Math.min(30, distanceBetweenNodes(start.geoLocation, destination.geoLocation) / 4))
+            : new DijkstraPathFinder(newGraph);
 
-        while (!pathfinder.nextSearchStep(setSearchPaths));
-        setShortestPath(pathfinder.getShortestPath());
+        (async () => {
+          let found = false;
+          while (!found) {
+            found = await pathfinder.nextSearchStep(setSearchPaths, setSearchTile);
+          }
+          setShortestPath(pathfinder.getShortestPath());
 
-        setGraph(newGraph);
-        animation.play();
-        setSearchLoading(false);
+          setGraph(newGraph);
+          setSearchLoading(false);
+          animation.play();
+        })();
       })
       .catch(() => {
         setSearchLoading(false);
@@ -138,21 +155,15 @@ export default function PathfindingVisualizer() {
     animation.reset();
   }, [pathfindingAlgorithm]);
 
-  useEffect(() => {
-    if (destination && bound && !isWithinBoundingBox(destination, bound)) {
-      setDestination(null);
-    }
-  }, [searchRadius]);
-
   const layers = [
     // new TripsLayer<Edge>({
     //   id: "path-layer",
-    //   data: graph?.getEdges(),
+    //   data: loadedPaths,
     //   getPath: (e) => [
     //     [e.getStart().getLongitude(), e.getStart().getLatitude()],
     //     [e.getEnd().getLongitude(), e.getEnd().getLatitude()],
     //   ],
-    //   getColor: [253, 128, 93],
+    //   getColor: [209, 213, 219], //tailwind gray-300
     //   fadeTrail: false,
     //   capRounded: true,
     //   jointRounded: true,
@@ -192,9 +203,69 @@ export default function PathfindingVisualizer() {
       jointRounded: true,
       widthMinPixels: 4,
     }),
+    // new PolygonLayer<Coordinates[]>({
+    //   id: "circle",
+    //   data: start ? [createGeoJSONCircle(start.geoLocation, searchRadius / 2)] : [],
+    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
+    //   getElevation: 10,
+    //   getFillColor: [0, 0, 0, 0],
+    //   getLineColor: [0, 0, 0],
+    //   getLineWidth: 4,
+    //   lineWidthMinPixels: 4,
+    //   pickable: true,
+    // }),
+    // new PolygonLayer<Coordinates[]>({
+    //   id: "rectangle",
+    //   data: bound
+    //     ? [
+    //         [
+    //           { type: "coordinates", lat: bound.top, lon: bound.left },
+    //           { type: "coordinates", lat: bound.top, lon: bound.right },
+    //           { type: "coordinates", lat: bound.bottom, lon: bound.right },
+    //           { type: "coordinates", lat: bound.bottom, lon: bound.left },
+    //         ],
+    //       ]
+    //     : [],
+    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
+    //   getElevation: 10,
+    //   getFillColor: [0, 0, 0, 0],
+    //   getLineColor: [0, 0, 0],
+    //   getLineWidth: 4,
+    //   lineWidthMinPixels: 4,
+    //   pickable: true,
+    // }),
+    // new PolygonLayer<Coordinates[]>({
+    //   id: "tile",
+    //   data: tile
+    //     ? [
+    //         [
+    //           { type: "coordinates", lat: tile.top, lon: tile.left },
+    //           { type: "coordinates", lat: tile.top, lon: tile.right },
+    //           { type: "coordinates", lat: tile.bottom, lon: tile.right },
+    //           { type: "coordinates", lat: tile.bottom, lon: tile.left },
+    //         ],
+    //       ]
+    //     : [],
+    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
+    //   getElevation: 10,
+    //   getFillColor: [0, 0, 0, 0],
+    //   getLineColor: [10, 0, 200],
+    //   getLineWidth: 4,
+    //   lineWidthMinPixels: 4,
+    //   pickable: true,
+    // }),
     new PolygonLayer<Coordinates[]>({
-      id: "circle",
-      data: start ? [createGeoJSONCircle(start.geoLocation, searchRadius)] : [],
+      id: "search-tile",
+      data: searchTile
+        ? [
+            [
+              { type: "coordinates", lat: searchTile.top, lon: searchTile.left },
+              { type: "coordinates", lat: searchTile.top, lon: searchTile.right },
+              { type: "coordinates", lat: searchTile.bottom, lon: searchTile.right },
+              { type: "coordinates", lat: searchTile.bottom, lon: searchTile.left },
+            ],
+          ]
+        : [],
       getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
       getElevation: 10,
       getFillColor: [0, 0, 0, 0],
@@ -316,17 +387,6 @@ export default function PathfindingVisualizer() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-col gap-4">
-              <Label htmlFor="search-radius">Search Radius</Label>
-              <div className="flex gap-2">
-                <div className="w-[56px]">
-                  <Input id="search-radius" type="text" value={searchRadius} readOnly />
-                </div>
-                <div className="flex gap-3 items-bottom w-full">
-                  <Slider min={1} max={50} step={1} value={[searchRadius]} onValueChange={([radius]) => setSearchRadius(radius)} />
-                </div>
-              </div>
-            </div>
           </fieldset>
           <PlaybackControls
             time={time}
@@ -350,7 +410,7 @@ export default function PathfindingVisualizer() {
         <div onContextMenu={(e) => e.preventDefault()}>
           <DeckGL
             initialViewState={viewState}
-            controller={{ doubleClickZoom: false, dragRotate: true, inertia: true }}
+            controller={{ doubleClickZoom: false, dragRotate: false, inertia: true }}
             onClick={(info, event) => {
               handleMapClick(info, event, setStart, setDestination, bound, lastClick, previousClickAbortController);
             }}

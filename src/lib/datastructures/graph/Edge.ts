@@ -4,12 +4,10 @@ import Node from "./Node";
 export default class Edge {
   private start: Node;
   private end: Node;
-  private length: number;
 
   constructor(start: Node, end: Node) {
     this.start = start;
     this.end = end;
-    this.length = distanceBetweenNodes(start, end);
   }
 
   getStart(): Node {
@@ -21,7 +19,7 @@ export default class Edge {
   }
 
   getLength(): number {
-    return this.length;
+    return distanceBetweenNodes(this.start, this.end);
   }
 
   opposite(from: Node): Node {

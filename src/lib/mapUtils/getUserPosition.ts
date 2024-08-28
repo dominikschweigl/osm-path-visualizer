@@ -9,6 +9,7 @@ export default function getUserPosition(zoom: number, setViewState: Dispatch<Set
       zoom: zoom,
       transitionInterpolator: new FlyToInterpolator({ speed: 2.5 }),
       transitionDuration: "auto",
+      pitch: 0,
     });
   });
 }

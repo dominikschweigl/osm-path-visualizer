@@ -5,6 +5,10 @@ import Edge from "../datastructures/graph/Edge";
 import distanceBetweenNodes from "../mapUtils/distanceBetweenNodes";
 import { SetStateAction, Dispatch } from "react";
 import { Pathfinder } from "./interface";
+import { createBoundingBox } from "../mapUtils/createBoundingBox";
+import { createSearchTile } from "../mapUtils/createSearchTile";
+import { queryStreets } from "../mapUtils/overpassQuery";
+import isWithinBoundingBox from "../mapUtils/isWithinBoundingBox";
 
 export default class AStarPathfinder implements Pathfinder {
   private graph: Graph;
@@ -16,13 +20,16 @@ export default class AStarPathfinder implements Pathfinder {
   private currentSearchNode: number;
   private currentShortestPathNode: Node;
 
-  constructor(graph: Graph) {
+  private searchTileSideLength: number;
+
+  constructor(graph: Graph, searchTileSideLength: number) {
     this.graph = graph;
     this.currentSearchNode = 1;
     this.currentShortestPathNode = graph.getDestination();
     this.searchedPaths = [];
     this.predecessors = new Map();
     this.heap = new NodeHeap(graph.getSource(), graph.getNodes());
+    this.searchTileSideLength = searchTileSideLength;
   }
 
   /**
@@ -30,15 +37,41 @@ export default class AStarPathfinder implements Pathfinder {
    * @param setSearchedPaths
    * @returns true if end has been reached
    */
-  nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>): boolean {
-    if (this.heap.peek().getDistance() === Number.MAX_VALUE) throw new Error("no connection to next node");
+  async nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>, setSearchTile: Dispatch<SetStateAction<BoundingBox | null>>): Promise<boolean> {
+    if (this.heap.peek().getDistance() === Number.MAX_VALUE) {
+      setSearchedPaths(this.searchedPaths);
+      console.error("no connection to next node");
+      return true;
+    }
+
+    if (!this.heap.peek().getIsInsideSeenArea()) {
+      const tile: BoundingBox = createSearchTile(
+        createBoundingBox(this.graph.getSource().getGeoLocation(), this.searchTileSideLength),
+        this.searchTileSideLength,
+        this.heap.peek().getGeoLocation()
+      );
+      setSearchTile(tile);
+
+      const streets = await queryStreets(tile, null);
+      const nodes = this.graph.addWays(...streets, tile);
+      for (const node of nodes) {
+        this.heap.add(node, node.getDistance());
+      }
+
+      return new Promise<boolean>((resolve) => {
+        resolve(false);
+      });
+    }
 
     const destination: Node = this.graph.getDestination();
     const nearestNode = this.heap.remove();
 
     if (nearestNode.getID() === destination.getID()) {
       setSearchedPaths(this.searchedPaths);
-      return true;
+      setSearchTile(null);
+      return new Promise<boolean>((resolve) => {
+        resolve(true);
+      });
     }
 
     nearestNode.getEdges().forEach((edge) => {
@@ -60,7 +93,9 @@ export default class AStarPathfinder implements Pathfinder {
       }
     });
 
-    return false;
+    return new Promise<boolean>((resolve) => {
+      resolve(false);
+    });
   }
 
   nextTrackBackPathStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>): boolean {
@@ -76,7 +111,7 @@ export default class AStarPathfinder implements Pathfinder {
   }
 
   getShortestPath(): Edge[] {
-    if (!this.predecessors.get(this.graph.getDestination().getID())) throw new Error("cannot return shortest path before searching");
+    if (!this.predecessors.get(this.graph.getDestination().getID())) console.error("cannot return shortest path before finding destination");
 
     const path = [];
     let current = this.currentShortestPathNode;
@@ -85,7 +120,9 @@ export default class AStarPathfinder implements Pathfinder {
     time++;
 
     while (current !== this.graph.getSource()) {
-      const predecessor = this.predecessors.get(current.getID())!;
+      const predecessor = this.predecessors.get(current.getID());
+      if (!predecessor) break;
+
       path.push(current.getEdge(predecessor));
       current = predecessor;
       current.setTrackBackVisitTime(time);

@@ -1,4 +1,5 @@
 import Node from "@/lib/datastructures/graph/Node";
+import distanceBetweenNodes from "../mapUtils/distanceBetweenNodes";
 
 export default class NodeHeap {
   private heap: { node: Node; key: number }[];
@@ -69,11 +70,11 @@ export default class NodeHeap {
     this.heap[index2] = temp;
   }
 
-  //TODO: implement add function
-  // add(node: Node): void {
-  //   this.heap.push({ node: node, distance: this.getNodeDistance(node) });
-  //   this.heapifyUp();
-  // }
+  add(node: Node, key: number): void {
+    this.heap.push({ node: node, key: key });
+    this.NodeIndices.set(node.getID(), this.heap.length - 1);
+    this.heapifyUp();
+  }
 
   private heapifyUp(nodeIndex?: number): void {
     let current = nodeIndex || this.heap.length - 1;
@@ -121,6 +122,7 @@ export default class NodeHeap {
   adjustDistance(node: Node, distance: number): void {
     const nodeIndex = this.NodeIndices.get(node.getID());
     if (!nodeIndex) {
+      // console.warn("Node not found in heap");
       return;
     }
 

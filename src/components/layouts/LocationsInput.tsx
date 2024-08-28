@@ -235,13 +235,13 @@ export default function LocationsInput({
                             document.getElementById(document.activeElement?.id as string)?.blur();
 
                             try {
-                              if (!isWithinBoundingBox(location, boundingBox!)) {
-                                toast.error("Select a Destination inside your bounding circle", {
-                                  icon: <CircleSlash color="#db2424" />,
-                                  description: "Unlimited search will be added in version 2.0",
-                                });
-                                return;
-                              }
+                              // if (!isWithinBoundingBox(location.geoLocation, boundingBox!)) {
+                              //   toast.error("Select a Destination inside your bounding circle", {
+                              //     icon: <CircleSlash color="#db2424" />,
+                              //     description: "Unlimited search will be added in version 2.0",
+                              //   });
+                              //   return;
+                              // }
                               setDestination(location);
                               setViewState((prev) =>
                                 start

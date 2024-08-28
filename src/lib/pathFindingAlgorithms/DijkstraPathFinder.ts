@@ -32,7 +32,10 @@ export default class DijkstraPathFinder implements Pathfinder {
    * @returns true if end has been reached
    */
   nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>): boolean {
-    if (this.heap.peek().getDistance() === Number.MAX_VALUE) throw new Error("no connection to next node");
+    if (this.heap.peek().getDistance() === Number.MAX_VALUE) {
+      console.error("no connection to next node");
+      return true;
+    }
 
     const destination: Node = this.graph.getDestination();
     const nearestNode = this.heap.remove();
@@ -77,7 +80,7 @@ export default class DijkstraPathFinder implements Pathfinder {
   }
 
   getShortestPath(): Edge[] {
-    if (!this.predecessors.get(this.graph.getDestination().getID())) throw new Error("cannot return shortest path before searching");
+    if (!this.predecessors.get(this.graph.getDestination().getID())) console.error("cannot return shortest path before finding destination");
 
     const path = [];
     let current = this.currentShortestPathNode;
@@ -86,7 +89,9 @@ export default class DijkstraPathFinder implements Pathfinder {
     time++;
 
     while (current !== this.graph.getSource()) {
-      const predecessor = this.predecessors.get(current.getID())!;
+      const predecessor = this.predecessors.get(current.getID());
+      if (!predecessor) break;
+
       path.push(current.getEdge(predecessor));
       current = predecessor;
       current.setTrackBackVisitTime(time);

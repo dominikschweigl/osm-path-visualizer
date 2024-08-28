@@ -59,13 +59,13 @@ export async function handleMapClick(
   if (event.rightButton) {
     try {
       const location = await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null);
-      if (!isWithinBoundingBox(location, bound)) {
-        toast.error("Select a Destination inside your bounding circle", {
-          icon: <CircleSlash color="#db2424" />,
-          description: "Unlimited search will be added in version 2.0",
-        });
-        return;
-      }
+      // if (!isWithinBoundingBox(location, bound)) {
+      //   toast.error("Select a Destination inside your bounding circle", {
+      //     icon: <CircleSlash color="#db2424" />,
+      //     description: "Unlimited search will be added in version 2.0",
+      //   });
+      //   return;
+      // }
       setDestination(location);
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {

@@ -30,7 +30,7 @@ export default function RootLayout({
             <header className="sticky top-0 z-40 flex items-center gap-2 border-b bg-background p-4">
               <Compass size={24} />
               <h1 className="text-lg font-semibold">OSM Pathfinding Visualizer</h1>
-              <Badge variant={"secondary"}>v 1.2</Badge>
+              <Badge variant={"secondary"}>v 1.3</Badge>
               <Drawer>
                 <DrawerTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
