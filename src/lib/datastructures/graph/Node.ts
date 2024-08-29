@@ -1,4 +1,5 @@
 import Edge from "./Edge";
+import { GeoLocationPoint } from "@/lib/types";
 
 export default class Node {
   public readonly type = "graph-node";
