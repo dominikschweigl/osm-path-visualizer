@@ -6,36 +6,26 @@ import { PickingInfo } from "@deck.gl/core";
 import { MjolnirGestureEvent } from "mjolnir.js";
 import { fetchError } from "../constants";
 import fetchLocationByCoordinates from "./fetchLocationByCoordinates";
-import isWithinBoundingBox from "./isWithinBoundingBox";
-import getBoundingBoxFromPolygon from "./getBoundingBoxFromPolygon";
-import { createGeoJSONCircle } from "./createGeoJSONCircle";
+import { MapLocation } from "../types";
 
 export async function handleMapClick(
   info: PickingInfo,
   event: MjolnirGestureEvent,
   setStart: Dispatch<SetStateAction<MapLocation | null>>,
   setDestination: Dispatch<SetStateAction<MapLocation | null>>,
-  bound: BoundingBox | null,
-  lastClickRef: MutableRefObject<number>,
   previousController: MutableRefObject<AbortController | null>
 ) {
   if (previousController.current) previousController.current.abort(fetchError.ABORT);
   const controller = new AbortController();
   previousController.current = controller;
 
-  const lastClick = lastClickRef.current;
-
-  lastClickRef.current = event.timeStamp;
   event.preventDefault();
-
-  // if (event.timeStamp - lastClick > 200) return;
 
   if (!info.coordinate) return;
 
   if (event.leftButton) {
     try {
       setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null));
-      setDestination(null);
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {
         //TODO: possibly use toast promise
@@ -45,14 +35,6 @@ export async function handleMapClick(
         });
       }
     }
-    return;
-  }
-
-  if (!bound) {
-    toast.error("First Select a starting Point", {
-      icon: <CircleSlash color="#db2424" />,
-      description: "Double click the left mouse button",
-    });
     return;
   }
 

@@ -1,7 +1,7 @@
 import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
 import Edge from "./Edge";
 import Node from "./Node";
-import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
+import { GeoLocationPoint, GeoLocationWay, BoundingBox } from "@/lib/types";
 
 export default class Graph {
   private nodes: Map<number, Node>;
@@ -10,7 +10,7 @@ export default class Graph {
   private destinationID: number;
   private highestSearchVisitTime: number;
 
-  constructor(source: Node, destination: Node, geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox) {
+  constructor(source: Node, destination: Node, geolocations?: GeoLocationPoint[], ways?: GeoLocationWay[]) {
     this.sourceID = source.getID();
     this.destinationID = destination.getID();
     this.edges = [];
@@ -22,7 +22,9 @@ export default class Graph {
     source.setIsInsideSeenArea(true);
     this.highestSearchVisitTime = 0;
 
-    this.addWays(geolocations, ways, bound);
+    if (geolocations && ways) {
+      this.addWays(geolocations, ways);
+    }
   }
 
   getSource(): Node {
@@ -55,7 +57,7 @@ export default class Graph {
     this.highestSearchVisitTime = searchTime;
   }
 
-  addWays(geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox): Node[] {
+  addWays(geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound?: BoundingBox): Node[] {
     const nodes: Node[] = [];
 
     for (const geolocation of geolocations) {
@@ -65,7 +67,9 @@ export default class Graph {
         this.nodes.set(geolocation.id, node);
         nodes.push(node);
       }
-      node.setIsInsideSeenArea(node.getIsInsideSeenArea() || isWithinBoundingBox(node.getGeoLocation(), bound));
+      if (bound) {
+        node.setIsInsideSeenArea(node.getIsInsideSeenArea() || isWithinBoundingBox(node.getGeoLocation(), bound));
+      }
     }
 
     for (const way of ways) {

@@ -1,34 +1,14 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimationSpeed } from "@/lib/constants";
 import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 import Graph from "@/lib/datastructures/graph/Graph";
+import { PathfindingAnimation } from "@/lib/types";
 
 interface UsePathfindingAnimationProps {
   graph: Graph | null;
-  start: MapLocation | null;
-  destination: MapLocation | null;
 }
 
-interface UsePathfindingAnimationResult {
-  searchLayerTime: number;
-  time: number;
-  setTime: Dispatch<SetStateAction<number>>;
-  maxTime: number;
-  isAnimationPlaying: boolean;
-  animationSpeed: AnimationSpeed;
-  setAnimationSpeed: Dispatch<SetStateAction<AnimationSpeed>>;
-  retractSearchPaths: boolean;
-  setRetractSearchPaths: Dispatch<SetStateAction<boolean>>;
-  animation: {
-    play: () => void;
-    pause: () => void;
-    reset: () => void;
-    restart: () => void;
-    finish: () => void;
-  };
-}
-
-export default function usePathfindingAnimation({ graph, start, destination }: UsePathfindingAnimationProps): UsePathfindingAnimationResult {
+export default function usePathfindingAnimation({ graph }: UsePathfindingAnimationProps): PathfindingAnimation {
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(AnimationSpeed.Medium);
   const [retractSearchPaths, setRetractSearchPaths] = useState<boolean>(true);
 
@@ -38,16 +18,18 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
   const maxTime = graph ? graph.getSource().getTrackBackVisitTime() + (retractSearchPaths ? graph.getDestination().getSearchVisitTime() : 0) : Number.MAX_VALUE;
 
   useEffect(() => {
-    if (!isAnimationPlaying || !graph || !start || !destination) {
+    if (!isAnimationPlaying || !graph) {
       setIsAnimationPlaying(false);
       return;
     }
+    const start = graph.getSource().getGeoLocation();
+    const destination = graph.getDestination().getGeoLocation();
 
     const interval = setInterval(() => {
-      const isSmallDistance = distanceBetweenNodes(start.geoLocation, destination.geoLocation) < 2 ? 2 : 0;
+      const isSmallDistance = distanceBetweenNodes(start, destination) < 2 ? 2 : 0;
 
       setTime((prev) => {
-        const next = Math.floor(prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance);
+        const next = Math.floor(prev + Math.pow(distanceBetweenNodes(start, destination), 2) * animationSpeed + isSmallDistance);
 
         if (prev < graph.getDestination().getSearchVisitTime()) {
           return Math.min(maxTime, graph.getCurrentSearchTime(), next);
@@ -82,7 +64,7 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
     setAnimationSpeed: setAnimationSpeed,
     retractSearchPaths: retractSearchPaths,
     setRetractSearchPaths: setRetractSearchPaths,
-    animation: {
+    controls: {
       play: () => setIsAnimationPlaying(true),
       pause: () => setIsAnimationPlaying(false),
       reset: () => {

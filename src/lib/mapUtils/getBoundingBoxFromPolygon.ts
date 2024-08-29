@@ -1,3 +1,5 @@
+import { BoundingBox, Coordinates } from "../types";
+
 export default function getBoundingBoxFromPolygon(polygon: Coordinates[]) {
   const boundingBox: BoundingBox = {
     top: Number.MIN_VALUE,

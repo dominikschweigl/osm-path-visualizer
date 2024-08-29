@@ -1,3 +1,5 @@
+import { GeoLocationPoint, BoundingBox } from "../types";
+
 export default function isWithinBoundingBox(location: GeoLocationPoint, bound: BoundingBox) {
   let point = location;
 

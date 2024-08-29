@@ -1,43 +1,28 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
-import { Button } from "../ui/button";
-import { Footprints, Goal, House, Locate, LocateFixed, MapPin, MapPinned, Building2, School, Route, Loader2, Search } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { MapViewState } from "@deck.gl/core";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
-import { Popover, PopoverTrigger } from "../ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
 import { toast } from "sonner";
 import { CircleSlash } from "lucide-react";
-import { fetchError } from "../../lib/constants";
+import { fetchError } from "../../../lib/constants";
 import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 import getMapZoomForDistance from "@/lib/mapUtils/getMapZoomForDistance";
-import LoadingSpinner from "../ui/spinner";
-import isWithinBoundingBox from "@/lib/mapUtils/isWithinBoundingBox";
+import LoadingSpinner from "../../ui/spinner";
+import { MapLocation } from "@/lib/types";
 
 const LOCATION_TYPES = ["city", "town", "village", "highway"];
 
-export default function LocationsInput({
-  start,
-  destination,
-  boundingBox,
-  searchLoading,
-  searchStarted,
-  setStart,
-  setDestination,
-  setViewState,
-  setSearchLoading,
-}: {
+interface LocationsInputProps {
   start: MapLocation | null;
   destination: MapLocation | null;
-  boundingBox: BoundingBox | null;
-  searchLoading: boolean;
-  searchStarted: boolean;
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewState: Dispatch<SetStateAction<MapViewState>>;
-  setSearchLoading: Dispatch<SetStateAction<boolean>>;
-}) {
+}
+
+export default function LocationsInput({ start, destination, setStart, setDestination, setViewState }: LocationsInputProps) {
   const [locations, setLocations] = useState<Map<string, MapLocation>>(new Map());
 
   const cities = Array.from(locations.values()).filter((location) => ["city", "town", "village"].includes(location.addresstype));

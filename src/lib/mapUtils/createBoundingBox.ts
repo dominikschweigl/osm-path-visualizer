@@ -1,4 +1,5 @@
 import { POLE_RADIUS, EQUATOR_RADIUS } from "../constants";
+import { GeoLocationPoint, Coordinates, BoundingBox } from "../types";
 
 /**
  *

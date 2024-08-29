@@ -1,6 +1,7 @@
 import { MutableRefObject } from "react";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
 import { fetchError } from "../../lib/constants";
+import { MapLocation } from "../types";
 
 export default async function fetchLocationByCoordinates(
   latitude: number,

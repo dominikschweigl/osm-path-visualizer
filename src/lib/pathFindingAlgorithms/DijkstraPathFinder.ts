@@ -8,6 +8,7 @@ import { Pathfinder } from "./interface";
 import { createBoundingBox } from "../mapUtils/createBoundingBox";
 import { createSearchTile } from "../mapUtils/createSearchTile";
 import { queryStreets } from "../mapUtils/overpassQuery";
+import { BoundingBox } from "../types";
 
 export default class DijkstraPathFinder implements Pathfinder {
   private graph: Graph;

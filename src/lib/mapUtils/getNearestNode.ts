@@ -3,6 +3,7 @@ import getBoundingBoxFromPolygon from "./getBoundingBoxFromPolygon";
 import { queryNodes } from "./overpassQuery";
 import distanceBetweenNodes from "./distanceBetweenNodes";
 import { fetchError } from "../constants";
+import { Coordinates, GeoLocationPoint } from "../types";
 
 const SEARCH_RADIUS: number = 2; //in km
 

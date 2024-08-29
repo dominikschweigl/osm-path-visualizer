@@ -1,6 +1,7 @@
 import { MEDIAN_EARTH_RADIUS } from "../constants";
 import { degreesToRads } from "./degreesToRads";
 import Node from "@/lib/datastructures/graph/Node";
+import { GeoLocationPoint, Coordinates } from "../types";
 
 export default function distanceBetweenNodes(start: GeoLocationPoint | Coordinates | Node, destination: GeoLocationPoint | Coordinates | Node): number {
   const { cos, sin, atan2, sqrt, abs } = Math;
