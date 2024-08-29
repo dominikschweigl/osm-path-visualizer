@@ -82,6 +82,7 @@ export default class AStarPathfinder implements Pathfinder {
 
       neighbor.setSearchVisitTime(this.currentSearchNode);
       this.currentSearchNode++;
+      this.graph.setCurrentSearchTime(this.currentSearchNode);
 
       this.searchedPaths.push(edge);
       // setSearchedPaths((prev) => [...prev, edge]);

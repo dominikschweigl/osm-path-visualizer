@@ -8,6 +8,7 @@ export default class Graph {
   private edges: Edge[];
   private sourceID: number;
   private destinationID: number;
+  private highestSearchVisitTime: number;
 
   constructor(source: Node, destination: Node, geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox) {
     this.sourceID = source.getID();
@@ -19,6 +20,7 @@ export default class Graph {
     source.setDistance(0);
     source.setSearchVisitTime(0);
     source.setIsInsideSeenArea(true);
+    this.highestSearchVisitTime = 0;
 
     this.addWays(geolocations, ways, bound);
   }
@@ -43,6 +45,14 @@ export default class Graph {
 
   getEdges(): Edge[] {
     return [...this.edges];
+  }
+
+  getCurrentSearchTime(): number {
+    return this.highestSearchVisitTime;
+  }
+
+  setCurrentSearchTime(searchTime: number): void {
+    this.highestSearchVisitTime = searchTime;
   }
 
   addWays(geolocations: GeoLocationPoint[], ways: GeoLocationWay[], bound: BoundingBox): Node[] {

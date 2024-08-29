@@ -120,18 +120,18 @@ export default function PathfindingVisualizer() {
           ways,
           bound
         );
+        setGraph(newGraph);
         const searchTileSize = Math.min(30, distanceBetweenNodes(start.geoLocation, destination.geoLocation) / 4);
         const pathfinder = pathfindingAlgorithm === "a*" ? new AStarPathfinder(newGraph, searchTileSize) : new DijkstraPathFinder(newGraph, searchTileSize);
 
         (async () => {
+          animation.play();
+
           let found = false;
           while (!found) {
             found = await pathfinder.nextSearchStep(setSearchPaths, setSearchTile);
           }
           setShortestPath(pathfinder.getShortestPath());
-          animation.play();
-
-          setGraph(newGraph);
           setSearchLoading(false);
         })();
       })

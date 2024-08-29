@@ -47,13 +47,13 @@ export default function usePathfindingAnimation({ graph, start, destination }: U
       const isSmallDistance = distanceBetweenNodes(start.geoLocation, destination.geoLocation) < 2 ? 2 : 0;
 
       setTime((prev) => {
-        // const graphSearchTime =
-        //   graph
-        //     ?.getNodes()
-        //     .map((n) => n.getSearchVisitTime())
-        //     .reduce((prev, curr) => (curr < Number.MAX_VALUE && curr > prev ? curr : prev), 0) || 0;
-        const nextTime = prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance;
-        return Math.min(maxTime, nextTime);
+        const next = Math.floor(prev + Math.pow(distanceBetweenNodes(start.geoLocation, destination.geoLocation), 2) * animationSpeed + isSmallDistance);
+
+        if (prev < graph.getDestination().getSearchVisitTime()) {
+          return Math.min(maxTime, graph.getCurrentSearchTime(), next);
+        } else {
+          return Math.min(maxTime, next);
+        }
       });
 
       if (time === maxTime) {
