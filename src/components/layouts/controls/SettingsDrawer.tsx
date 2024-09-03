@@ -22,19 +22,19 @@ interface SettingsDrawerProps {
 }
 
 export default function SettingsDrawer({ start, destination, pathfinder, animation, setStart, setDestination, setViewstate, children }: SettingsDrawerProps) {
-  const [snap, setSnap] = useState<number | string | null>("100px");
+  const [snap, setSnap] = useState<number | string | null>("250px");
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useWindowResize(() => setIsOpen(window.innerWidth < 768));
 
   useEffect(() => {
     if (animation.isAnimationPlaying) {
-      setSnap("100px");
+      setSnap("250px");
     }
   }, [animation]);
 
   return (
-    <Drawer modal={false} open={isOpen} snapPoints={["100px", 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
+    <Drawer modal={false} open={isOpen} snapPoints={["250px", 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="px-4 outline-none z-50 shadow-sm-top">
         <DrawerHeader>
