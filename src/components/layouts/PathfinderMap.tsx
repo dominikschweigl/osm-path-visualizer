@@ -6,11 +6,14 @@ import { DeckProps } from "@deck.gl/core";
 import "maplibre-gl/dist/maplibre-gl.css";
 import DeckGL from "@deck.gl/react";
 import getUserPosition from "@/lib/mapUtils/getUserPosition";
-import { handleMapClick } from "@/lib/mapUtils/handleMapClick";
+import { handleMapClickDesktop } from "@/lib/mapUtils/handleMapClickDesktop";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { Dispatch, SetStateAction, useRef } from "react";
 import Edge from "@/lib/datastructures/graph/Edge";
 import { MapLocation, PathfinderState, PathfindingAnimation } from "@/lib/types";
+import { primaryInput } from "detect-it";
+import { handleMapClickMobile } from "@/lib/mapUtils/handleMapClickMobile";
+import { MapPin } from "lucide-react";
 
 const MAP_STYLE = maptiler.MapStyle.STREETS.LIGHT.getExpandedStyleURL().concat("?key=Jn6z9F7PwQrDmuB1lfHJ");
 
@@ -91,12 +94,41 @@ export default function PathfinderMap({ start, destination, viewstate, pathfinde
         initialViewState={viewstate}
         controller={{ doubleClickZoom: false, dragRotate: false, inertia: true }}
         onClick={(info, event) => {
-          handleMapClick(info, event, setStart, setDestination, previousClickAbortController);
+          if (primaryInput === "mouse") {
+            handleMapClickDesktop(info, event, previousClickAbortController, setStart, setDestination);
+          } else {
+            handleMapClickMobile(info, event, start, previousClickAbortController, setStart, setDestination);
+          }
         }}
       >
         <Map mapStyle={MAP_STYLE} onLoad={() => getUserPosition(viewstate.zoom, setViewstate)} locale={"en"}>
-          {start !== null && <Marker latitude={start.geoLocation.lat} longitude={start.geoLocation.lon} color="#000" />}
-          {destination !== null && <Marker latitude={destination.geoLocation.lat} longitude={destination.geoLocation.lon} color="#000" />}
+          {start !== null && (
+            <Marker latitude={start.geoLocation.lat} longitude={start.geoLocation.lon}>
+              <div className="size-4 rounded-full border-black border-[2px] bg-white"></div>{" "}
+            </Marker>
+          )}
+          {destination !== null && (
+            <Marker latitude={destination.geoLocation.lat} longitude={destination.geoLocation.lon} offset={[0, -10]}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20 10C20 14.993 14.461 20.193 12.601 21.799C12.4277 21.9293 12.2168 21.9998 12 21.9998C11.7832 21.9998 11.5723 21.9293 11.399 21.799C9.539 20.193 4 14.993 4 10C4 7.87827 4.84285 5.84344 6.34315 4.34315C7.84344 2.84285 9.87827 2 12 2C14.1217 2 16.1566 2.84285 17.6569 4.34315C19.1571 5.84344 20 7.87827 20 10Z"
+                  fill="white"
+                  stroke="black"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
+                  fill="white"
+                  stroke="black"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </Marker>
+          )}
           {
             //@ts-ignore
             <DeckGLOverlay layers={layers} interleaved />

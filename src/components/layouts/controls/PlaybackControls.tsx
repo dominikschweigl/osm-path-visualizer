@@ -5,27 +5,26 @@ import Graph from "@/lib/datastructures/graph/Graph";
 import { Button } from "@/components/ui/button";
 import { FastForward, Pause, Play, Rewind, RotateCcw, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { AnimationControls } from "@/lib/types";
+import { AnimationControls, PathfindingAnimation } from "@/lib/types";
+import { Text } from "@/components/ui/typography";
 
 interface PlaybackControlsProps {
-  time: number;
-  isAnimationPlaying: boolean;
-  retractSearchPaths: boolean;
-  maxTime: number;
-  setRetractSearchPaths: Dispatch<SetStateAction<boolean>>;
-  setTime: Dispatch<SetStateAction<number>>;
-  controls: AnimationControls;
+  animation: PathfindingAnimation;
 }
 
-export default function PlaybackControls({ time, isAnimationPlaying, retractSearchPaths, maxTime, setRetractSearchPaths, setTime, controls }: PlaybackControlsProps) {
+export default function PlaybackControls({ animation }: PlaybackControlsProps) {
+  const { isAnimationPlaying, time, maxTime, controls, retractSearchPaths, setTime, setRetractSearchPaths } = animation;
+
   return (
-    <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
-      <legend className="-ml-1 px-1 text-sm font-medium">Playback</legend>
+    <fieldset className="grid gap-4 w-full">
+      <Text as={"h5"} element="h2" className="hidden md:block">
+        Playback
+      </Text>
       <div className="grid gap-3">
         <Label htmlFor="animationTime">Animation Time</Label>
         <Slider id={"animationTime"} max={maxTime} min={0} step={0.01} value={[time]} onValueChange={([time]) => setTime(time)} />
       </div>
-      <div className="grid grid-cols-4 gap-x-3 gap-y-6">
+      <div className="grid mt-2 grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-6">
         <Button className="gap-1.5 text-sm" type="button" onClick={controls.reset}>
           <Rewind className="size-3.5" />
           Reset
@@ -41,16 +40,15 @@ export default function PlaybackControls({ time, isAnimationPlaying, retractSear
             Play
           </Button>
         )}
-
         <Button className="gap-1.5 text-sm" type="button" onClick={controls.finish}>
           <FastForward className="size-3.5" />
           Finish
         </Button>
-        <Button className="gap-1.5 text-sm" type="button" onClick={controls.restart}>
+        <Button className="gap-1.5 text-sm hidden sm:flex md:hidden lg:flex" type="button" onClick={controls.restart}>
           <RotateCcw className="size-3.5" />
           Restart
         </Button>
-        <div className="flex items-center space-x-2 col-span-4">
+        <div className="flex items-center space-x-2 col-span-3 sm:col-span-4 md:col-span-3 lg:col-span-4">
           <Switch
             id="retract-search-paths"
             onCheckedChange={(v) => {

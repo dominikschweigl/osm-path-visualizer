@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, Circle, Dot, MapPin } from "lucide-react";
 import { MapViewState } from "@deck.gl/core";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import getNearestNode from "@/lib/mapUtils/getNearestNode";
@@ -11,6 +11,8 @@ import distanceBetweenNodes from "@/lib/mapUtils/distanceBetweenNodes";
 import getMapZoomForDistance from "@/lib/mapUtils/getMapZoomForDistance";
 import LoadingSpinner from "../../ui/spinner";
 import { MapLocation } from "@/lib/types";
+import { Text } from "@/components/ui/typography";
+import { Separator } from "@/components/ui/separator";
 
 const LOCATION_TYPES = ["city", "town", "village", "highway"];
 
@@ -57,96 +59,105 @@ export default function LocationsInput({ start, destination, setStart, setDestin
   }, [destination]);
 
   return (
-    <fieldset className="grid gap-6 rounded-lg border p-4 bg-white">
-      <legend className="-ml-1 px-1 text-sm font-medium">Locations</legend>
-      <div className="grid gap-2">
-        <div className="flex flex-nowrap">
-          <Label htmlFor="start">Start</Label>
+    <fieldset className="grid gap-4 w-full">
+      <Text as={"h5"} element="h2" className="hidden md:block">
+        Locations
+      </Text>
+      <div className="flex flex-nowrap">
+        <div className="h-full flex flex-col justify-between items-center pt-[16px] pb-[12px] pr-1 md:pr-3">
+          <div className="size-4 rounded-full border-gray-500 border-[2px]"></div>
+          <div className="grid gap-1.5">
+            <div className="size-[3px] rounded-full border-gray-500 bg-gray-500"></div>
+            <div className="size-[3px] rounded-full border-gray-500 bg-gray-500"></div>
+            <div className="size-[3px] rounded-full border-gray-500 bg-gray-500"></div>
+          </div>
+          <MapPin className="size-5 text-blue-500" />
         </div>
-        <Command className="">
-          <CommandInput
-            id="start"
-            value={`${startValue}`}
-            // icon={<MapPinned className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
-            placeholder="Search for a starting location..."
-            onValueChange={async (s) => {
-              setStartValue(s);
-              // await new Promise((_) => setTimeout(() => {}, 50));
-              try {
-                setStartLoading(true);
-                const new_locations = await fetchLocationsByName(s, startFetchController);
-                setStartLoading(false);
-                setLocations((prev) => {
-                  const locations = new Map(prev);
-                  new_locations.forEach((l) => locations.set(`${l.city}, ${l.region}, ${l.country}`, l));
-                  return locations;
-                });
-              } catch (e) {
-                if (e == fetchError.ABORT) {
-                  setStartLoading(true);
-                } else {
-                  setStartLoading(false);
-                }
-              }
-            }}
-            onBlur={() => setStartValue(start ? `${start.city}, ${start.region}, ${start.country}` : "")}
-          />
-          <CommandList>
-            {startLoading ? (
-              <CommandEmpty>
-                <LoadingSpinner className="mx-auto" />
-              </CommandEmpty>
-            ) : (
-              <>
-                <CommandEmpty>No Locations found.</CommandEmpty>
-                {cities.length > 0 && (
-                  <CommandGroup heading="Cities">
-                    {cities
-                      .filter((location) => `${location.city}, ${location.region}, ${location.country}`.toLowerCase().includes(startValue.toLowerCase()))
-                      .sort((a, b) => b.importance - a.importance)
-                      .filter((_, i) => i < 3)
-                      .map((location) => (
-                        <CommandItem
-                          key={location.geoLocation.id}
-                          value={`${location.city}, ${location.region}, ${location.country}`}
-                          onSelect={async (v) => {
-                            setStartValue(v);
-                            document.getElementById(document.activeElement?.id as string)?.blur();
-                            try {
-                              setStart(location);
-                              setViewState((prev) =>
-                                destination
-                                  ? {
-                                      ...prev,
-                                      zoom: getMapZoomForDistance(distanceBetweenNodes(destination.geoLocation, location.geoLocation)),
-                                      latitude: (location.geoLocation.lat + destination.geoLocation.lat) / 2,
-                                      longitude: (location.geoLocation.lon + destination.geoLocation.lon) / 2,
-                                    }
-                                  : { ...prev, latitude: location.geoLocation.lat, longitude: location.geoLocation.lon }
-                              );
-                            } catch (err) {
-                              if (err == fetchError.NO_NODE_IN_PROXIMITY) {
-                                //TODO: possibly use toast promise
-                                toast.error("No Street found nearby", {
-                                  icon: <CircleSlash color="#db2424" />,
-                                  description: "Choose a start Location on a road",
-                                });
-                              } else {
-                                toast.error("Try again", {
-                                  icon: <CircleSlash color="#db2424" />,
-                                  description: "Something went wrong",
-                                });
-                              }
-                            }
-                          }}
-                        >
-                          <Building2 className="mr-2 h-4 w-4" />
-                          <span>{`${location.city}, ${location.region}, ${location.country}`}</span>
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                )}
-                {/* {streets.length > 0 && (
+        <div className="flex flex-col gap-2 md:gap-4 w-full">
+          <div className="grid gap-2 w-full">
+            <Command tabIndex={1}>
+              <CommandInput
+                id="start"
+                value={`${startValue}`}
+                placeholder="Search for a starting location..."
+                onValueChange={async (s) => {
+                  setStartValue(s);
+                  // await new Promise((_) => setTimeout(() => {}, 50));
+                  try {
+                    setStartLoading(true);
+                    const new_locations = await fetchLocationsByName(s, startFetchController);
+                    setStartLoading(false);
+                    setLocations((prev) => {
+                      const locations = new Map(prev);
+                      new_locations.forEach((l) => locations.set(`${l.city}, ${l.region}, ${l.country}`, l));
+                      return locations;
+                    });
+                  } catch (e) {
+                    if (e == fetchError.ABORT) {
+                      setStartLoading(true);
+                    } else {
+                      setStartLoading(false);
+                    }
+                  }
+                }}
+                onBlur={() => setStartValue(start ? `${start.city}, ${start.region}, ${start.country}` : "")}
+              />
+              <CommandList>
+                {startLoading ? (
+                  <CommandEmpty>
+                    <LoadingSpinner className="mx-auto" />
+                  </CommandEmpty>
+                ) : (
+                  <>
+                    <CommandEmpty>No Locations found.</CommandEmpty>
+                    {cities.length > 0 && (
+                      <CommandGroup heading="Cities">
+                        {cities
+                          .filter((location) => `${location.city}, ${location.region}, ${location.country}`.toLowerCase().includes(startValue.toLowerCase()))
+                          .sort((a, b) => b.importance - a.importance)
+                          .filter((_, i) => i < 3)
+                          .map((location) => (
+                            <CommandItem
+                              key={location.geoLocation.id}
+                              value={`${location.city}, ${location.region}, ${location.country}`}
+                              onSelect={async (v) => {
+                                setStartValue(v);
+                                document.getElementById(document.activeElement?.id as string)?.blur();
+                                try {
+                                  setStart(location);
+                                  setViewState((prev) =>
+                                    destination
+                                      ? {
+                                          ...prev,
+                                          zoom: getMapZoomForDistance(distanceBetweenNodes(destination.geoLocation, location.geoLocation)),
+                                          latitude: (location.geoLocation.lat + destination.geoLocation.lat) / 2,
+                                          longitude: (location.geoLocation.lon + destination.geoLocation.lon) / 2,
+                                        }
+                                      : { ...prev, latitude: location.geoLocation.lat, longitude: location.geoLocation.lon }
+                                  );
+                                } catch (err) {
+                                  if (err == fetchError.NO_NODE_IN_PROXIMITY) {
+                                    //TODO: possibly use toast promise
+                                    toast.error("No Street found nearby", {
+                                      icon: <CircleSlash color="#db2424" />,
+                                      description: "Choose a start Location on a road",
+                                    });
+                                  } else {
+                                    toast.error("Try again", {
+                                      icon: <CircleSlash color="#db2424" />,
+                                      description: "Something went wrong",
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <Building2 className="mr-2 h-4 w-4" />
+                              <span>{`${location.city}, ${location.region}, ${location.country}`}</span>
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    )}
+                    {/* {streets.length > 0 && (
                   <>
                     <CommandSeparator />
                     <CommandGroup heading="Streets">
@@ -163,104 +174,107 @@ export default function LocationsInput({ start, destination, setStart, setDestin
                     </CommandGroup>
                   </>
                 )} */}
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="destination">Destination</Label>
-        <Command className="">
-          <CommandInput
-            id="destination"
-            value={destinationValue}
-            // icon={<Goal className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
-            placeholder="Search for a destination location..."
-            onValueChange={async (s) => {
-              setDestinationValue(s);
-              try {
-                setDestinationLoading(true);
-                const new_locations = await fetchLocationsByName(s, destinationFetchController);
-                setDestinationLoading(false);
-                setLocations((prev) => {
-                  const locations = new Map(prev);
-                  new_locations.forEach((l) => locations.set(`${l.city}, ${l.region}, ${l.country}`, l));
-                  return locations;
-                });
-              } catch (e) {
-                if (e == fetchError.ABORT) {
-                  setStartLoading(true);
-                } else {
-                  setStartLoading(false);
-                }
-              }
-            }}
-            onBlur={() => setDestinationValue(destination ? `${destination.city}, ${destination.region}, ${destination.country}` : "")}
-          />
-          <CommandList>
-            {destinationLoading ? (
-              <CommandEmpty>
-                <LoadingSpinner className="mx-auto" />
-              </CommandEmpty>
-            ) : (
-              <>
-                <CommandEmpty>No locations found.</CommandEmpty>
-                {cities.length > 0 && (
-                  <CommandGroup heading="Cities">
-                    {cities
-                      .filter((location) => `${location.street}, ${location.city}, ${location.country}`.toLowerCase().includes(destinationValue.toLowerCase()))
-                      .sort((a, b) => b.importance - a.importance)
-                      .filter((_, i) => i < 3)
-                      .map((location) => (
-                        <CommandItem
-                          key={location.geoLocation.id}
-                          value={`${location.city}, ${location.region}, ${location.country}`}
-                          onSelect={async (v) => {
-                            setDestinationValue(v);
-                            document.getElementById(document.activeElement?.id as string)?.blur();
-
-                            try {
-                              // if (!isWithinBoundingBox(location.geoLocation, boundingBox!)) {
-                              //   toast.error("Select a Destination inside your bounding circle", {
-                              //     icon: <CircleSlash color="#db2424" />,
-                              //     description: "Unlimited search will be added in version 2.0",
-                              //   });
-                              //   return;
-                              // }
-                              setDestination(location);
-                              setViewState((prev) =>
-                                start
-                                  ? {
-                                      ...prev,
-                                      zoom: getMapZoomForDistance(distanceBetweenNodes(start.geoLocation, location.geoLocation)),
-                                      latitude: (location.geoLocation.lat + start.geoLocation.lat) / 2,
-                                      longitude: (location.geoLocation.lon + start.geoLocation.lon) / 2,
-                                    }
-                                  : { ...prev, latitude: location.geoLocation.lat, longitude: location.geoLocation.lon }
-                              );
-                            } catch (err) {
-                              if (err == fetchError.NO_NODE_IN_PROXIMITY) {
-                                //TODO: possibly use toast promise
-                                toast.error("No Street found nearby", {
-                                  icon: <CircleSlash color="#db2424" />,
-                                  description: "Choose a destination Location on a road",
-                                });
-                              } else {
-                                toast.error("Try again", {
-                                  icon: <CircleSlash color="#db2424" />,
-                                  description: "Something went wrong",
-                                });
-                              }
-                            }
-                          }}
-                        >
-                          <Building2 className="mr-2 h-4 w-4" />
-                          <span>{`${location.city}, ${location.region}, ${location.country}`}</span>
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
+                  </>
                 )}
-                {/* {streets.length > 0 && (
+              </CommandList>
+            </Command>
+          </div>
+          <div className="ml-4 mr-2 md:hidden">
+            <Separator />
+          </div>
+
+          <div className="grid gap-2">
+            <Command className="" tabIndex={-2}>
+              <CommandInput
+                id="destination"
+                value={destinationValue}
+                // icon={<Goal className="mr-2 h-5 w-5 shrink-0 opacity-50" />}
+                placeholder="Search for a destination location..."
+                onValueChange={async (s) => {
+                  setDestinationValue(s);
+                  try {
+                    setDestinationLoading(true);
+                    const new_locations = await fetchLocationsByName(s, destinationFetchController);
+                    setDestinationLoading(false);
+                    setLocations((prev) => {
+                      const locations = new Map(prev);
+                      new_locations.forEach((l) => locations.set(`${l.city}, ${l.region}, ${l.country}`, l));
+                      return locations;
+                    });
+                  } catch (e) {
+                    if (e == fetchError.ABORT) {
+                      setStartLoading(true);
+                    } else {
+                      setStartLoading(false);
+                    }
+                  }
+                }}
+                onBlur={() => setDestinationValue(destination ? `${destination.city}, ${destination.region}, ${destination.country}` : "")}
+              />
+              <CommandList>
+                {destinationLoading ? (
+                  <CommandEmpty>
+                    <LoadingSpinner className="mx-auto" />
+                  </CommandEmpty>
+                ) : (
+                  <>
+                    <CommandEmpty>No locations found.</CommandEmpty>
+                    {cities.length > 0 && (
+                      <CommandGroup heading="Cities">
+                        {cities
+                          .filter((location) => `${location.street}, ${location.city}, ${location.country}`.toLowerCase().includes(destinationValue.toLowerCase()))
+                          .sort((a, b) => b.importance - a.importance)
+                          .filter((_, i) => i < 3)
+                          .map((location) => (
+                            <CommandItem
+                              key={location.geoLocation.id}
+                              value={`${location.city}, ${location.region}, ${location.country}`}
+                              onSelect={async (v) => {
+                                setDestinationValue(v);
+                                document.getElementById(document.activeElement?.id as string)?.blur();
+
+                                try {
+                                  // if (!isWithinBoundingBox(location.geoLocation, boundingBox!)) {
+                                  //   toast.error("Select a Destination inside your bounding circle", {
+                                  //     icon: <CircleSlash color="#db2424" />,
+                                  //     description: "Unlimited search will be added in version 2.0",
+                                  //   });
+                                  //   return;
+                                  // }
+                                  setDestination(location);
+                                  setViewState((prev) =>
+                                    start
+                                      ? {
+                                          ...prev,
+                                          zoom: getMapZoomForDistance(distanceBetweenNodes(start.geoLocation, location.geoLocation)),
+                                          latitude: (location.geoLocation.lat + start.geoLocation.lat) / 2,
+                                          longitude: (location.geoLocation.lon + start.geoLocation.lon) / 2,
+                                        }
+                                      : { ...prev, latitude: location.geoLocation.lat, longitude: location.geoLocation.lon }
+                                  );
+                                } catch (err) {
+                                  if (err == fetchError.NO_NODE_IN_PROXIMITY) {
+                                    //TODO: possibly use toast promise
+                                    toast.error("No Street found nearby", {
+                                      icon: <CircleSlash color="#db2424" />,
+                                      description: "Choose a destination Location on a road",
+                                    });
+                                  } else {
+                                    toast.error("Try again", {
+                                      icon: <CircleSlash color="#db2424" />,
+                                      description: "Something went wrong",
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <Building2 className="mr-2 h-4 w-4" />
+                              <span>{`${location.city}, ${location.region}, ${location.country}`}</span>
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    )}
+                    {/* {streets.length > 0 && (
                   <>
                     <CommandSeparator />
                     <CommandGroup heading="Streets">
@@ -277,22 +291,13 @@ export default function LocationsInput({ start, destination, setStart, setDestin
                     </CommandGroup>
                   </>
                 )} */}
-              </>
-            )}
-          </CommandList>
-        </Command>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </div>
+        </div>
       </div>
-      {/* <Button
-        onClick={() => {
-          if (!start || !destination) return;
-        }}
-        type="button"
-        className="relative"
-        disabled={searchLoading || searchStarted}
-      >
-        {searchLoading ? <LoadingSpinner size={16} className="left-4 mr-2" /> : <Route size={16} className="left-4 mr-2" />}
-        Search
-      </Button> */}
     </fieldset>
   );
 }

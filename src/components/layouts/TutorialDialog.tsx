@@ -9,7 +9,11 @@ import { Text } from "../ui/typography";
 
 const VALUES = ["map", "playback", "settings"];
 
-export default function TutorialDialog() {
+interface TutorialDialogProps {
+  children: React.ReactNode;
+}
+
+export default function TutorialDialog({ children }: TutorialDialogProps) {
   const [value, setValue] = useState("map");
   const [open, setOpen] = useState(false);
 
@@ -28,16 +32,10 @@ export default function TutorialDialog() {
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="gap-1.5 text-sm">
-          <Play className="size-3.5" />
-          Tutorial
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="h-[90%] flex flex-col ">
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="h-[90%] flex flex-col">
         <DialogHeader>
           <DialogTitle>OSM Pathfinder Tutorial</DialogTitle>
-          {/* <DialogDescription>It's really quick and easy, dont worry.</DialogDescription> */}
         </DialogHeader>
 
         <Tabs value={value} onValueChange={setValue} className="py-1">

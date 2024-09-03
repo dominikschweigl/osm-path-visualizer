@@ -52,13 +52,6 @@ export default function usePathfinder({ graph, animation }: UsePathfinderProps):
     };
   }, [graph, algorithm]);
 
-  useEffect(() => {
-    if (!graph) return;
-    setSearchPaths([]);
-    setShortestPath([]);
-    animation.reset();
-  }, [algorithm]);
-
   return {
     searchPaths: searchPaths,
     shortestPath: shortestPath,
