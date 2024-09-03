@@ -22,21 +22,21 @@ interface SettingsDrawerProps {
 }
 
 export default function SettingsDrawer({ start, destination, pathfinder, animation, setStart, setDestination, setViewstate, children }: SettingsDrawerProps) {
-  const [snap, setSnap] = useState<number | string | null>("532px");
+  const [snap, setSnap] = useState<number | string | null>("100px");
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useWindowResize(() => setIsOpen(window.innerWidth < 768));
 
   useEffect(() => {
     if (animation.isAnimationPlaying) {
-      setSnap("532px");
+      setSnap("100px");
     }
   }, [animation]);
 
   return (
-    <Drawer modal={false} open={isOpen} snapPoints={["532px", 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
+    <Drawer modal={false} open={isOpen} snapPoints={["100px", 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className=" px-4 outline-none z-50 shadow-sm-top">
+      <DrawerContent className="px-4 outline-none z-50 shadow-sm-top">
         <DrawerHeader>
           <DrawerTitle>Configuration</DrawerTitle>
           <DrawerDescription>Configure the settings for the search algorithm and animation.</DrawerDescription>

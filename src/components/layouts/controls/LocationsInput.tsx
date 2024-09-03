@@ -305,6 +305,7 @@ export default function LocationsInput({ start, destination, setStart, setDestin
 async function fetchLocationsByName(searchInput: string, previousController: MutableRefObject<AbortController>): Promise<Map<string, MapLocation>> {
   if (previousController.current) previousController.current.abort(fetchError.ABORT);
   const controller = new AbortController();
+  previousController.current.abort();
   previousController.current = controller;
 
   try {
