@@ -47,7 +47,7 @@ export default function LocationsInput({ start, destination, setStart, setDestin
     }
     setStartValue(`${start.city}, ${start.region}, ${start.country}`);
     locations.set(`${start.city}, ${start.region}, ${start.country}`, start);
-  }, [start]);
+  }, [start, locations]);
 
   useEffect(() => {
     if (!destination) {
@@ -56,7 +56,7 @@ export default function LocationsInput({ start, destination, setStart, setDestin
     }
     setDestinationValue(`${destination.city}, ${destination.region}, ${destination.country}`);
     locations.set(`${destination.city}, ${destination.region}, ${destination.country}`, destination);
-  }, [destination]);
+  }, [destination, locations]);
 
   return (
     <fieldset className="grid gap-4 w-full">

@@ -22,7 +22,6 @@ export default function Settings({ pathfinder, animation }: SettingsProps) {
           value={pathfinder.algorithm}
           onValueChange={(v: PathfindingAlgorithm) => {
             pathfinder.setAlgorithm(v);
-            console.log(v);
           }}
         >
           <SelectTrigger id="model" className="items-start [&_[data-description]]:hidden">

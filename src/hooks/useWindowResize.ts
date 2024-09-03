@@ -8,5 +8,5 @@ export default function useWindowResize(func: () => void): void {
     return () => {
       window.removeEventListener("resize", func);
     };
-  }, []);
+  }, [func]);
 }

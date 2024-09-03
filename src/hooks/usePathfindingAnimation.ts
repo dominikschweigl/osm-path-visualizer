@@ -45,7 +45,7 @@ export default function usePathfindingAnimation({ graph }: UsePathfindingAnimati
     }, 1);
 
     return () => clearInterval(interval);
-  }, [time, isAnimationPlaying, graph]);
+  }, [time, isAnimationPlaying, graph, animationSpeed, maxTime]);
 
   useEffect(() => {
     setTime(Math.min(time, maxTime));

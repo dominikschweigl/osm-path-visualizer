@@ -13,7 +13,7 @@ export default function Page404() {
           404 | Page not found.
         </Text>
         <Text as={"p"} element="p" className="-mt-3 mb-2 sm:mb-0 lg:mt-0">
-          It looks like you've stumbled upon a page that doesn't exist. But don't worry, you're not lost — just a little off track.
+          It looks like you&apos;ve stumbled upon a page that doesn&apos;t exist. But don&apos;t worry, you&apos;re not lost — just a little off track.
         </Text>
         <Link href={"/"}>
           <Button className="gap-1.5 lg:mt-4 w-full lg:w-fit" size={"lg"}>
