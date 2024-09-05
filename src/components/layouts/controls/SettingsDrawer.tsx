@@ -22,21 +22,23 @@ interface SettingsDrawerProps {
 }
 
 export default function SettingsDrawer({ start, destination, pathfinder, animation, setStart, setDestination, setViewstate, children }: SettingsDrawerProps) {
-  const [snap, setSnap] = useState<number | string | null>("250px");
+  const [snap, setSnap] = useState<number | string | null>(0);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [windowHeight, setWindowHeight] = useState<number>(0);
 
   useWindowResize(() => setIsOpen(window.innerWidth < 768));
+  useWindowResize(() => setWindowHeight(window.innerHeight));
 
   useEffect(() => {
     if (animation.isAnimationPlaying) {
-      setSnap("250px");
+      setSnap(`${windowHeight - 436}px`);
     }
   }, [animation]);
 
   return (
-    <Drawer modal={false} open={isOpen} snapPoints={["250px", 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
+    <Drawer modal={false} open={isOpen} snapPoints={[`${windowHeight - 436}px`, 1]} activeSnapPoint={snap} setActiveSnapPoint={setSnap} dismissible={false}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className="px-4 outline-none z-50 shadow-sm-top">
+      <DrawerContent className={`px-4 outline-none z-50 shadow-sm-top`}>
         <DrawerHeader>
           <DrawerTitle>Configuration</DrawerTitle>
           <DrawerDescription>Configure the settings for the search algorithm and animation.</DrawerDescription>
