@@ -19,7 +19,7 @@ export default class Graph {
     this.nodes.set(this.destinationID, destination);
     source.setDistance(0);
     source.setSearchVisitTime(0);
-    source.setIsInsideSeenArea(true);
+    source.setIsInsideSeenArea(false);
     this.highestSearchVisitTime = 0;
 
     if (geolocations && ways) {

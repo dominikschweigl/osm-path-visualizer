@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Graph from "@/lib/datastructures/graph/Graph";
 import Edge from "@/lib/datastructures/graph/Edge";
 import DijkstraPathFinder from "@/lib/pathFindingAlgorithms/DijkstraPathFinder";
@@ -21,15 +21,18 @@ export default function usePathfinder({ graph, animation }: UsePathfinderProps):
   const [searchTile, setSearchTile] = useState<BoundingBox | null>(null);
 
   const [searchLoading, setSearchLoading] = useState(false);
+  const [previousAbortController, setPreviousAbortController] = useState<AbortController>(new AbortController());
 
   useEffect(() => {
     setSearchPaths([]);
     setShortestPath([]);
     animation.reset();
-
-    if (!graph || searchLoading) return;
-
+    previousAbortController.abort();
     const controller = new AbortController();
+    setPreviousAbortController(controller);
+
+    if (!graph) return;
+
     setSearchLoading(true);
 
     const searchTileSize = Math.min(40, distanceBetweenNodes(graph.getSource().getGeoLocation(), graph.getDestination().getGeoLocation()) / 4);
@@ -40,7 +43,12 @@ export default function usePathfinder({ graph, animation }: UsePathfinderProps):
 
       let found = false;
       while (!found) {
-        found = await pathfinder.nextSearchStep(setSearchPaths, setSearchTile);
+        try {
+          found = await pathfinder.nextSearchStep(setSearchPaths, setSearchTile, controller.signal);
+        } catch {
+          found = true;
+          setSearchPaths([]);
+        }
       }
       setShortestPath(pathfinder.getShortestPath());
       setSearchLoading(false);

@@ -14,7 +14,9 @@ export async function handleMapClickDesktop(
   setStart: Dispatch<SetStateAction<MapLocation | null>>,
   setDestination: Dispatch<SetStateAction<MapLocation | null>>
 ) {
-  if (previousController.current) previousController.current.abort(fetchError.ABORT);
+  if (previousController.current) {
+    previousController.current.abort(fetchError.ABORT);
+  }
   const controller = new AbortController();
   previousController.current = controller;
 
@@ -24,7 +26,7 @@ export async function handleMapClickDesktop(
 
   if (event.leftButton) {
     try {
-      setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null));
+      setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal));
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {
         toast.error("No Street found nearby", {
@@ -38,7 +40,7 @@ export async function handleMapClickDesktop(
 
   if (event.rightButton) {
     try {
-      const location = await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null);
+      const location = await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal);
       setDestination(location);
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {

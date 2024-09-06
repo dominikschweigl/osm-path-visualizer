@@ -25,7 +25,7 @@ export async function handleMapClickMobile(
 
   if (!start) {
     try {
-      setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null));
+      setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal));
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {
         toast.error("No Street found nearby", {
@@ -37,7 +37,7 @@ export async function handleMapClickMobile(
     return;
   } else {
     try {
-      const location = await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, null);
+      const location = await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal);
       setDestination(location);
     } catch (err) {
       if (err == fetchError.NO_NODE_IN_PROXIMITY) {

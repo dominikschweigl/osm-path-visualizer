@@ -11,17 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import useWindowResize from "@/hooks/useWindowResize";
 
 interface SettingsDrawerProps {
-  start: MapLocation | null;
-  destination: MapLocation | null;
   pathfinder: PathfinderState;
   animation: PathfindingAnimation;
-  setStart: Dispatch<SetStateAction<MapLocation | null>>;
-  setDestination: Dispatch<SetStateAction<MapLocation | null>>;
-  setViewstate: Dispatch<SetStateAction<MapViewState>>;
   children?: React.ReactNode;
 }
 
-export default function SettingsDrawer({ start, destination, pathfinder, animation, setStart, setDestination, setViewstate, children }: SettingsDrawerProps) {
+export default function SettingsDrawer({ pathfinder, animation, children }: SettingsDrawerProps) {
   const [snap, setSnap] = useState<number | string | null>(0);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [windowHeight, setWindowHeight] = useState<number>(0);

@@ -56,15 +56,7 @@ export default function PathfindingVisualizer() {
         <Badge variant="outline" className="hidden md:block absolute right-3 top-3 bg-white z-10">
           Output
         </Badge>
-        <SettingsDrawer
-          start={start}
-          destination={destination}
-          pathfinder={pathfinder}
-          animation={animation}
-          setStart={setStart}
-          setDestination={setDestination}
-          setViewstate={setViewstate}
-        />
+        <SettingsDrawer pathfinder={pathfinder} animation={animation} />
         <PathfinderMap
           start={start}
           destination={destination}

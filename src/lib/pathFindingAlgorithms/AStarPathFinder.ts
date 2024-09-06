@@ -9,6 +9,7 @@ import { createBoundingBox } from "../mapUtils/createBoundingBox";
 import { createSearchTile } from "../mapUtils/createSearchTile";
 import { queryStreets } from "../mapUtils/overpassQuery";
 import { BoundingBox } from "../types";
+import { fetchError } from "../constants";
 
 export default class AStarPathfinder implements Pathfinder {
   private graph: Graph;
@@ -37,7 +38,15 @@ export default class AStarPathfinder implements Pathfinder {
    * @param setSearchedPaths
    * @returns true if end has been reached
    */
-  async nextSearchStep(setSearchedPaths: Dispatch<SetStateAction<Edge[]>>, setSearchTile: Dispatch<SetStateAction<BoundingBox | null>>): Promise<boolean> {
+  async nextSearchStep(
+    setSearchedPaths: Dispatch<SetStateAction<Edge[]>>,
+    setSearchTile: Dispatch<SetStateAction<BoundingBox | null>>,
+    abortSignal: AbortSignal | null
+  ): Promise<boolean> {
+    if (abortSignal && abortSignal.aborted) {
+      return new Promise((_, reject) => reject(fetchError.ABORT));
+    }
+
     if (this.heap.peek().getDistance() === Number.MAX_VALUE) {
       setSearchedPaths([...this.searchedPaths]);
       console.error("no connection to next node");
@@ -55,10 +64,14 @@ export default class AStarPathfinder implements Pathfinder {
       setSearchTile(tile);
       setSearchedPaths([...this.searchedPaths]);
 
-      const streets = await queryStreets(tile, null);
-      const nodes = this.graph.addWays(...streets, tile);
-      for (const node of nodes) {
-        this.heap.add(node, node.getDistance());
+      try {
+        const streets = await queryStreets(tile, abortSignal);
+        const nodes = this.graph.addWays(...streets, tile);
+        for (const node of nodes) {
+          this.heap.add(node, node.getDistance());
+        }
+      } catch {
+        return new Promise((_, reject) => reject(fetchError.ABORT));
       }
 
       return new Promise<boolean>((resolve) => {
@@ -115,8 +128,6 @@ export default class AStarPathfinder implements Pathfinder {
   }
 
   getShortestPath(): Edge[] {
-    if (!this.predecessors.get(this.graph.getDestination().getID())) console.error("cannot return shortest path before finding destination");
-
     const path = [];
     let current = this.currentShortestPathNode;
     let time = this.currentSearchNode;

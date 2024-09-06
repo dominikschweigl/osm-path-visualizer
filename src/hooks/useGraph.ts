@@ -16,23 +16,12 @@ export default function useGraph({ start, destination }: UseGraphProps): Graph |
 
   useEffect(() => {
     if (!start || !destination) return;
-
-    const controller = new AbortController();
-    const bound = createBoundingBox(start.geoLocation, 1);
-    queryStreets(bound, controller.signal).then(([nodes, ways]) => {
-      setGraph(
-        new Graph(
-          new Node(start.geoLocation.id, start.geoLocation.lat, start.geoLocation.lon),
-          new Node(destination.geoLocation.id, destination.geoLocation.lat, destination.geoLocation.lon),
-          nodes,
-          ways
-        )
-      );
-    });
-
-    return () => {
-      controller.abort(fetchError.ABORT);
-    };
+    setGraph(
+      new Graph(
+        new Node(start.geoLocation.id, start.geoLocation.lat, start.geoLocation.lon),
+        new Node(destination.geoLocation.id, destination.geoLocation.lat, destination.geoLocation.lon)
+      )
+    );
   }, [start, destination]);
 
   return graph;
