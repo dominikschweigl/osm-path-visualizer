@@ -73,7 +73,6 @@ export default function PathfinderMap({ start, destination, viewstate, pathfinde
     <div onContextMenu={(e) => e.preventDefault()}>
       <DeckGL
         initialViewState={viewstate}
-        layers={layers}
         controller={{ doubleClickZoom: false, dragRotate: false, inertia: true }}
         onClick={(info, event) => {
           if (primaryInput === "mouse") {
@@ -111,8 +110,18 @@ export default function PathfinderMap({ start, destination, viewstate, pathfinde
               </svg>
             </Marker>
           )}
+          {
+            //@ts-ignore
+            <DeckGLOverlay layers={layers} interleaved />
+          }
         </Map>
       </DeckGL>
     </div>
   );
+}
+
+function DeckGLOverlay(props: DeckProps) {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
 }

@@ -21,9 +21,9 @@ export default function Sidebar({ start, destination, pathfinder, animation, set
   return (
     <form className="flex flex-col w-full h-full max-h-[760px] items-start gap-6 py-6">
       <LocationsInput start={start} destination={destination} setStart={setStart} setDestination={setDestination} setViewState={setViewState} setLoading={setLoading} />
-      <Separator className="my-auto h-[1.5px]" />
+      <Separator className="my-auto h-px" />
       <Settings animation={animation} pathfinder={pathfinder} />
-      <Separator className="my-auto h-[1.5px]" />
+      <Separator className="my-auto h-px" />
       <PlaybackControls animation={animation} />
     </form>
   );

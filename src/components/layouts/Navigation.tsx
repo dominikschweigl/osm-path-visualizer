@@ -19,7 +19,7 @@ export default function Navigation() {
         OSM Pathfinder
       </Text>
       <Badge variant={"secondary"} className="ml-1">
-        v 1.4
+        v 2.0
       </Badge>
       <Menu />
       <div className="ml-auto flex">

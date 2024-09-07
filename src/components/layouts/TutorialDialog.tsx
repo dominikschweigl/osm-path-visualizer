@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Clapperboard, Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Text } from "../ui/typography";
+import useWindowResize from "@/hooks/useWindowResize";
 
 const VALUES = ["map", "playback", "settings"];
 
@@ -30,10 +31,13 @@ export default function TutorialDialog({ children }: TutorialDialogProps) {
     }
   };
 
+  const [windowHeight, setWindowHeight] = useState<number>(0);
+  useWindowResize(() => setWindowHeight(window.innerHeight));
+
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="h-[90%] flex flex-col">
+      <DialogContent className="max-h-[95vh] max-w-[min(864px,95vw)] flex flex-col">
         <DialogHeader>
           <DialogTitle>OSM Pathfinder Tutorial</DialogTitle>
         </DialogHeader>
@@ -50,52 +54,79 @@ export default function TutorialDialog({ children }: TutorialDialogProps) {
               3. Settings
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="map" className="mt-6 px-10">
-            <video className="w-full aspect-video rounded-xl border p-px" autoPlay loop muted>
-              <source src="/osm-path-visualizer/tutorial/map.mp4" type="video/mp4" />
-            </video>
+          <TabsContent value="map">
+            <div className="w-full aspect-[16/8.4] rounded-xl border overflow-hidden">
+              <video className="-mt-[15px] ml-px" autoPlay loop muted>
+                <source src="/osm-path-visualizer/tutorial/map.mp4" type="video/mp4" />
+              </video>
+            </div>
             <Text element={"h3"} as={"h3"} className="mt-6">
               Map Controls
             </Text>
-            <Text element="p" as={"p"} className="mt-2">
-              The Map can be navigated by holding the left mouse button and dragging in the desired direction. By Left Click Drag you can rotate and skew the map to your desire.
-              Map Zoom is controlled by the scroll wheel.
+            <Text element="p" as={"p"} className={`mt-2 ${windowHeight < 760 ? "truncate" : ""}`}>
+              The Map can be navigated by holding the left mouse button and dragging in the desired direction. Map Zoom is controlled by the scroll wheel. Start and Destination
+              Locations can be set by clicking on the map or searching the city name in the input fields.
             </Text>
             <Text element="ul" as={"ul"} className="mt-3 mb-0">
-              <li>Left Click: Place start position</li>
-              <li>Right Click: Place destination position (must be placed within the shown radius)</li>
+              <li className="hidden md:list-item">
+                <span className="font-medium">Left Click</span>: Place start position
+              </li>
+              <li className="md:hidden">
+                <span className="font-medium">1st Click</span>: Place start position
+              </li>
+              <li className="hidden md:list-item">
+                <span className="font-medium">Right Click</span>: Place destination position
+              </li>
+              <li className="md:hidden">
+                <span className="font-medium">2nd Click</span>: Place destination position
+              </li>
+              <li>
+                <span className="font-medium">Location Input</span>: Search for your City by name
+              </li>
             </Text>
           </TabsContent>
-          <TabsContent value="playback" className="mt-6 px-10">
-            <video className="w-full aspect-video rounded-xl border p-px" autoPlay loop muted>
-              <source src="/osm-path-visualizer/tutorial/playback.mp4" type="video/mp4" />
-            </video>
+          <TabsContent value="playback">
+            <div className="w-full aspect-[16/8.4] rounded-xl border overflow-hidden">
+              <video className="-mt-[15px] ml-px" autoPlay loop muted>
+                <source src="/osm-path-visualizer/tutorial/playback.mp4" type="video/mp4" />
+              </video>
+            </div>
             <Text element={"h3"} as={"h3"} className="mt-6">
               Playback Controls
             </Text>
-            <Text element="p" as={"p"} className="mt-2">
+            <Text element="p" as={"p"} className={`mt-2 ${windowHeight < 760 ? "truncate" : ""}`}>
               To start the visualization, press the Start Button. A playback feature is available after the algorithm ends. You can rewatch the algorithm from any point in time or
               clear the path by dragging the animation slider to the desired position.
             </Text>
             <Text element="ul" as={"ul"} className="mt-3 mb-0">
-              <li>Animation Time: Drag the handle see specific time frames</li>
+              <li>
+                <span className="font-medium">Animation Time</span>: Drag the handle see specific time frames or use the control buttons
+              </li>
+              <li>
+                <span className="font-medium">Retract Search Paths</span>: deactivate to continue showing searched paths on found destination
+              </li>
             </Text>
           </TabsContent>
-          <TabsContent value="settings" className="mt-6 px-10">
-            <video className="w-full aspect-video rounded-xl border p-px" autoPlay loop muted>
-              <source src="/osm-path-visualizer/tutorial/settings.mp4" type="video/mp4" />
-            </video>
+          <TabsContent value="settings">
+            <div className="w-full aspect-[16/8.4] rounded-xl border overflow-hidden">
+              <video className="-mt-[15px] ml-px" autoPlay loop muted>
+                <source src="/osm-path-visualizer/tutorial/settings.mp4" type="video/mp4" />
+              </video>
+            </div>
             <Text element={"h3"} as={"h3"} className="mt-6">
               Settings
             </Text>
-            <Text element="p" as={"p"} className="mt-2">
-              You can customize the settings of the animation in the Settings Sidebar. With Increasing area radius the calculation may take a while depending on your device and
+            <Text element="p" as={"p"} className={`mt-2 ${windowHeight < 760 ? "truncate" : ""}`}>
+              You can customize the settings of the animation in the Settings Sidebar. With Increasing distance the calculation may take a while depending on your device and
               internet connection.
             </Text>
             <Text element="ul" as={"ul"} className="mt-3 mb-0">
-              <li>Animation Speed: Changes how fast the animation will play</li>
-              <li>Search Algorithm: Selects the used algorithm (some are only suited for short distances)</li>
-              <li>Search Radius: Confines the search space (large radii may cause performance issues)</li>
+              <li>
+                <span className="font-medium">Animation Speed</span>: Changes how fast the animation will play
+              </li>
+              <li>
+                <span className="font-medium">Search Algorithm</span>: Selects the used algorithm (some are only suited for short distances)
+              </li>
             </Text>
           </TabsContent>
         </Tabs>

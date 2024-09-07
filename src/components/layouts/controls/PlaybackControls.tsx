@@ -21,8 +21,8 @@ export default function PlaybackControls({ animation }: PlaybackControlsProps) {
         Playback
       </Text>
       <div className="grid gap-3">
-        <Label htmlFor="animationTime">Animation Time</Label>
-        <Slider id={"animationTime"} max={maxTime} min={0} step={0.01} value={[time]} onValueChange={([time]) => setTime(time)} />
+        <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Animation Time</div>
+        <Slider id="animationTime" max={maxTime} min={0} step={0.01} value={[time]} onValueChange={([time]) => setTime(time)} />
       </div>
       <div className="grid mt-2 grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-6">
         <Button className="gap-1.5 text-sm" type="button" onClick={controls.reset}>
