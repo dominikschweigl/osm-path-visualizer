@@ -4,12 +4,13 @@ This is a pathfinding visualizer that I made while learning common pathfinding a
 https://github.com/user-attachments/assets/c8e2406a-e0de-4304-83c0-1c5ab3d8f13f
 
 ## Table of contents
-* [Data preparation](https://github.com/dominikschweigl/osm-path-visualizer/edit/main/README.md#data-preparation)
-* [Loading the graph](https://github.com/dominikschweigl/osm-path-visualizer/edit/main/README.md#loading-the-graph)
-* [Rendering](https://github.com/dominikschweigl/osm-path-visualizer/edit/main/README.md#rendering)
-* [Pathfinding](https://github.com/dominikschweigl/osm-path-visualizer/edit/main/README.md#pathfinding)
-* [Developing locally](https://github.com/dominikschweigl/osm-path-visualizer/edit/main/README.md#developing-locally)
+* [Data preparation](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#data-preparation)
+* [Loading the graph](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#loading-the-graph)
+* [Rendering](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#rendering)
+* [Pathfinding](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#pathfinding)
+* [Developing locally](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#developing-locally)
 <br/><br/>
+
 ## Data preparation
 Data generated and stored in this repository comes from www.openstreetmap.org
 (available under the [ODbL](https://opendatacommons.org/licenses/odbl/) license).
