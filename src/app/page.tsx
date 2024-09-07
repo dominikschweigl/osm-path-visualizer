@@ -52,7 +52,7 @@ export default function PathfindingVisualizer() {
           setViewState={setViewstate}
         />
       </div>
-      <div className="relative flex min-h-[50vh] flex-col border border-gray-100 md:rounded-3xl bg-white p-4 md:col-span-2 xl:col-span-3 overflow-hidden">
+      <div className="relative flex min-h-[50vh] flex-col border border-gray-100 md:rounded-3xl bg-white p-4 md:col-span-2 xl:col-span-3 overflow-hidden mt-[176px] md:mt-0 mb-[86px] md:mb-0">
         <Badge variant="outline" className="hidden md:block absolute right-3 top-3 bg-white z-10">
           Output
         </Badge>

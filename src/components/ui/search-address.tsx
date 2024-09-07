@@ -40,7 +40,7 @@ const SearchAddress: React.FC<SearchAddressProps> = ({ onSelectLocation, placeho
           aria-expanded={open}
           className={`text-${
             selectedItem ? "popover" : "muted"
-          }-foreground h-auto px-4 py-3 border border-white ring-0 md:border-muted/70 w-full justify-between rounded-md bg-popover md:bg-muted/70 truncate`}
+          }-foreground h-auto px-4 py-3 border border-white focus-visible:ring-0 focus-visible:ring-transparent md:border-muted/70 w-full justify-between rounded-md bg-popover md:bg-muted/70 truncate`}
         >
           <p className="truncate">{selectedItem ? `${selectedItem.label}` : label ? label : placeholder || "Select place..."}</p>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
