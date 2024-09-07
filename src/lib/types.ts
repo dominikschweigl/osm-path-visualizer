@@ -29,6 +29,7 @@ export type MapLocation = {
   country: string;
   addresstype: string;
   importance: number;
+  label: string;
   geoLocation: GeoLocationPoint;
 };
 

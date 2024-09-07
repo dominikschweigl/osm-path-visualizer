@@ -20,6 +20,7 @@ export default async function fetchLocationByCoordinates(latitude: number, longi
     country: location.address.country,
     importance: location.importance,
     addresstype: location.addresstype,
+    label: location.display_name,
     geoLocation: geoLocation,
   };
 
