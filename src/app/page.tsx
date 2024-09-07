@@ -52,6 +52,7 @@ export default function PathfindingVisualizer() {
           setStart={setStart}
           setDestination={setDestination}
           setViewState={setViewstate}
+          setLoading={setLoading}
         />
       </div>
       <div className="relative flex min-h-[50vh] flex-col border border-gray-100 md:rounded-3xl bg-white p-4 md:col-span-2 xl:col-span-3 overflow-hidden mt-[176px] md:mt-0 mb-[86px] md:mb-0">

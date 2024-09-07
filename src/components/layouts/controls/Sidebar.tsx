@@ -14,12 +14,13 @@ interface SidebarProps {
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewState: Dispatch<SetStateAction<MapViewState>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function Sidebar({ start, destination, pathfinder, animation, setStart, setDestination, setViewState }: SidebarProps) {
+export default function Sidebar({ start, destination, pathfinder, animation, setStart, setDestination, setViewState, setLoading }: SidebarProps) {
   return (
     <form className="flex flex-col w-full h-full max-h-[760px] items-start gap-6 py-6">
-      <LocationsInput start={start} destination={destination} setStart={setStart} setDestination={setDestination} setViewState={setViewState} />
+      <LocationsInput start={start} destination={destination} setStart={setStart} setDestination={setDestination} setViewState={setViewState} setLoading={setLoading} />
       <Separator className="my-auto h-[1.5px]" />
       <Settings animation={animation} pathfinder={pathfinder} />
       <Separator className="my-auto h-[1.5px]" />

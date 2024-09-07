@@ -46,7 +46,7 @@ export default function LocationsInput({ start, destination, setStart, setDestin
           </div>
           <MapPin className="size-5 text-blue-500" />
         </div>
-        <div className="flex flex-col gap-2 md:gap-4 w-full min-h-[109px]">
+        <div className="flex flex-col gap-2 md:gap-4 w-full min-h-[111px]">
           <div className="grid gap-2 w-full">
             <SearchAddress
               label={start?.label}
