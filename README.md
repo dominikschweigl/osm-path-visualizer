@@ -4,11 +4,11 @@ This is a pathfinding visualizer that I made while learning common pathfinding a
 https://github.com/user-attachments/assets/c8e2406a-e0de-4304-83c0-1c5ab3d8f13f
 
 ## Table of contents
-* [Data preparation](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#data-preparation)
-* [Loading the graph](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#loading-the-graph)
-* [Rendering](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#rendering)
-* [Pathfinding](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#pathfinding)
-* [Developing locally](https://github.com/dominikschweigl/osm-path-visualizer/tree/main?tab=readme-ov-file#developing-locally)
+* [Data preparation](#data-preparation)
+* [Loading the graph](#loading-the-graph)
+* [Rendering](#rendering)
+* [Pathfinding](#pathfinding)
+* [Developing locally](#developing-locally)
 <br/><br/>
 
 ## Data preparation
