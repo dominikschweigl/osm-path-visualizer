@@ -12,7 +12,8 @@ export async function handleMapClickDesktop(
   event: MjolnirGestureEvent,
   previousController: MutableRefObject<AbortController | null>,
   setStart: Dispatch<SetStateAction<MapLocation | null>>,
-  setDestination: Dispatch<SetStateAction<MapLocation | null>>
+  setDestination: Dispatch<SetStateAction<MapLocation | null>>,
+  setLoading: Dispatch<SetStateAction<boolean>>
 ) {
   if (previousController.current) {
     previousController.current.abort(fetchError.ABORT);
@@ -24,6 +25,7 @@ export async function handleMapClickDesktop(
 
   if (!info.coordinate) return;
 
+  setLoading(true);
   if (event.leftButton) {
     try {
       setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal));
@@ -35,7 +37,6 @@ export async function handleMapClickDesktop(
         });
       }
     }
-    return;
   }
 
   if (event.rightButton) {
@@ -51,4 +52,5 @@ export async function handleMapClickDesktop(
       }
     }
   }
+  setLoading(false);
 }

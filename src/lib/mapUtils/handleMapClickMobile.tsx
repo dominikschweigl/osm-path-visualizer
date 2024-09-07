@@ -13,7 +13,8 @@ export async function handleMapClickMobile(
   start: MapLocation | null,
   previousController: MutableRefObject<AbortController | null>,
   setStart: Dispatch<SetStateAction<MapLocation | null>>,
-  setDestination: Dispatch<SetStateAction<MapLocation | null>>
+  setDestination: Dispatch<SetStateAction<MapLocation | null>>,
+  setLoading: Dispatch<SetStateAction<boolean>>
 ) {
   if (previousController.current) previousController.current.abort(fetchError.ABORT);
   const controller = new AbortController();
@@ -23,6 +24,7 @@ export async function handleMapClickMobile(
 
   if (!info.coordinate) return;
 
+  setLoading(true);
   if (!start) {
     try {
       setStart(await fetchLocationByCoordinates(info.coordinate[1], info.coordinate[0], info.viewport?.zoom!, controller.signal));
@@ -48,4 +50,5 @@ export async function handleMapClickMobile(
       }
     }
   }
+  setLoading(false);
 }

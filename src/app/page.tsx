@@ -11,6 +11,7 @@ import useGraph from "@/hooks/useGraph";
 import PathfinderMap from "@/components/layouts/PathfinderMap";
 import SettingsDrawer from "@/components/layouts/controls/SettingsDrawer";
 import LocationsInput from "@/components/layouts/controls/LocationsInput";
+import LoadingSpinner from "@/components/ui/spinner";
 
 const INITIAL_ZOOM = 10;
 
@@ -26,6 +27,7 @@ export default function PathfindingVisualizer() {
 
   const [start, setStart] = useState<MapLocation | null>(null);
   const [destination, setDestination] = useState<MapLocation | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const graph = useGraph({ start, destination });
 
@@ -39,7 +41,7 @@ export default function PathfindingVisualizer() {
   return (
     <main className="grid flex-1 gap-6 overflow-auto md:px-6 md:pb-6 md:grid-cols-3 xl:grid-cols-4">
       <div className="md:hidden absolute top-16 w-full z-50 bg-white rounded-b-[10px] border-b px-4 pb-3 shadow-sm">
-        <LocationsInput start={start} destination={destination} setStart={setStart} setDestination={setDestination} setViewState={setViewstate} />
+        <LocationsInput start={start} destination={destination} setStart={setStart} setDestination={setDestination} setViewState={setViewstate} setLoading={setLoading} />
       </div>
       <div className="relative hidden flex-col items-start gap-8 md:flex" x-chunk="dashboard-03-chunk-0">
         <Sidebar
@@ -66,7 +68,13 @@ export default function PathfindingVisualizer() {
           setStart={setStart}
           setDestination={setDestination}
           setViewstate={setViewstate}
+          setLoading={setLoading}
         />
+        {loading && (
+          <div className="absolute right-4 bottom-6 md:bottom-4">
+            <LoadingSpinner size={32} />
+          </div>
+        )}
       </div>
     </main>
   );

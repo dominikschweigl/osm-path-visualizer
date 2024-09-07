@@ -26,9 +26,10 @@ interface PathfinderMapProps {
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewstate: Dispatch<SetStateAction<MapViewState>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function PathfinderMap({ start, destination, viewstate, pathfinder, animation, setStart, setDestination, setViewstate }: PathfinderMapProps) {
+export default function PathfinderMap({ start, destination, viewstate, pathfinder, animation, setStart, setDestination, setViewstate, setLoading }: PathfinderMapProps) {
   const previousClickAbortController = useRef<AbortController | null>(null);
 
   const layers = [
@@ -66,38 +67,19 @@ export default function PathfinderMap({ start, destination, viewstate, pathfinde
       jointRounded: true,
       widthMinPixels: 4,
     }),
-    // new PolygonLayer<Coordinates[]>({
-    //   id: "search-tile",
-    //   data: pathfinder.searchTile
-    //     ? [
-    //         [
-    //           { type: "coordinates", lat: pathfinder.searchTile.top, lon: pathfinder.searchTile.left },
-    //           { type: "coordinates", lat: pathfinder.searchTile.top, lon: pathfinder.searchTile.right },
-    //           { type: "coordinates", lat: pathfinder.searchTile.bottom, lon: pathfinder.searchTile.right },
-    //           { type: "coordinates", lat: pathfinder.searchTile.bottom, lon: pathfinder.searchTile.left },
-    //         ],
-    //       ]
-    //     : [],
-    //   getPolygon: (ps) => ps.map((p) => [p.lon, p.lat]),
-    //   getElevation: 10,
-    //   getFillColor: [0, 0, 0, 0],
-    //   getLineColor: [0, 0, 0],
-    //   getLineWidth: 4,
-    //   lineWidthMinPixels: 4,
-    //   pickable: true,
-    // }),
   ];
 
   return (
     <div onContextMenu={(e) => e.preventDefault()}>
       <DeckGL
         initialViewState={viewstate}
+        layers={layers}
         controller={{ doubleClickZoom: false, dragRotate: false, inertia: true }}
         onClick={(info, event) => {
           if (primaryInput === "mouse") {
-            handleMapClickDesktop(info, event, previousClickAbortController, setStart, setDestination);
+            handleMapClickDesktop(info, event, previousClickAbortController, setStart, setDestination, setLoading);
           } else {
-            handleMapClickMobile(info, event, start, previousClickAbortController, setStart, setDestination);
+            handleMapClickMobile(info, event, start, previousClickAbortController, setStart, setDestination, setLoading);
           }
         }}
       >
@@ -129,18 +111,8 @@ export default function PathfinderMap({ start, destination, viewstate, pathfinde
               </svg>
             </Marker>
           )}
-          {
-            //@ts-ignore
-            <DeckGLOverlay layers={layers} interleaved />
-          }
         </Map>
       </DeckGL>
     </div>
   );
-}
-
-function DeckGLOverlay(props: DeckProps) {
-  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
-  overlay.setProps(props);
-  return null;
 }

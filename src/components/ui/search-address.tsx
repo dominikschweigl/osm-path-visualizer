@@ -39,7 +39,7 @@ const SearchAddress: React.FC<SearchAddressProps> = ({ onSelectLocation, placeho
           role="combobox"
           aria-expanded={open}
           className={`text-${
-            selectedItem ? "popover" : "muted"
+            selectedItem || label ? "popover" : "muted"
           }-foreground h-auto px-4 py-3 border border-white focus-visible:ring-0 focus-visible:ring-transparent md:border-muted/70 w-full justify-between rounded-md bg-popover md:bg-muted/70 truncate`}
         >
           <p className="truncate">{selectedItem ? `${selectedItem.label}` : label ? label : placeholder || "Select place..."}</p>

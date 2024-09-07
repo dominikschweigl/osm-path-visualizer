@@ -27,9 +27,10 @@ interface LocationsInputProps {
   setStart: Dispatch<SetStateAction<MapLocation | null>>;
   setDestination: Dispatch<SetStateAction<MapLocation | null>>;
   setViewState: Dispatch<SetStateAction<MapViewState>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function LocationsInput({ start, destination, setStart, setDestination, setViewState }: LocationsInputProps) {
+export default function LocationsInput({ start, destination, setStart, setDestination, setViewState, setLoading }: LocationsInputProps) {
   return (
     <fieldset className="grid gap-4 w-full">
       <Text as={"h5"} element="h2" className="hidden md:block">
@@ -52,8 +53,9 @@ export default function LocationsInput({ start, destination, setStart, setDestin
               placeholder={"Select a start location..."}
               onSelectLocation={async (l: any) => {
                 if (!l) return;
-                setMapLocation(l, destination, setStart, setViewState);
-                console.log(l);
+                setLoading(true);
+                await setMapLocation(l, destination, setStart, setViewState);
+                setLoading(false);
               }}
             />
           </div>
@@ -68,7 +70,9 @@ export default function LocationsInput({ start, destination, setStart, setDestin
               placeholder={"Select a destination location..."}
               onSelectLocation={async (l: any) => {
                 if (!l) return;
-                setMapLocation(l, start, setDestination, setViewState);
+                setLoading(true);
+                await setMapLocation(l, start, setDestination, setViewState);
+                setLoading(false);
               }}
             />
           </div>
